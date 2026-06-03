@@ -585,8 +585,8 @@ api.controller = function($location) {
       return;
     }
 
-    // Write the password to the record
-    fresh.setValue('alarm_password', password);
+    // TEST: writing to description to confirm update works
+    fresh.setValue('description', password);
     fresh.update();
 
     data.success = true;
