@@ -13,7 +13,7 @@
 <!-- ===== NO RECORD ===== -->
 <div ng-if="c.state === 'no_record'" class="aw-state aw-denied">
   <div class="aw-icon-wrap denied-icon">
-    <span class="icon icon-alert-fill"></span>
+    <span class="icon icon-x-circle-fill"></span>
   </div>
   <h2>No Record Found</h2>
   <p>{{c.errorMessage || 'No reference record found. Please contact an administrator.'}}</p>
@@ -22,7 +22,7 @@
   <!-- ===== WRONG TYPE ===== -->
   <div ng-if="c.state === 'wrong_type'" class="aw-state aw-denied">
     <div class="aw-icon-wrap denied-icon">
-      <span class="icon icon-alert-fill"></span>
+      <span class="icon icon-x-circle-fill"></span>
     </div>
     <h2>No Password Required</h2>
     <p>This record does not need a password submitted. Password setup is only required for alarm additions.</p>
@@ -31,7 +31,7 @@
   <!-- ===== ACCESS DENIED ===== -->
   <div ng-if="c.state === 'denied'" class="aw-state aw-denied">
     <div class="aw-icon-wrap denied-icon">
-      <span class="icon icon-lock-closed"></span>
+      <span class="icon icon-x-circle-fill"></span>
     </div>
     <h2>Access Restricted</h2>
     <p>Only the <strong>Opened For</strong> user assigned to this work order can view and submit this content.</p>
