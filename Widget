@@ -425,19 +425,22 @@ function() {
     var sysId = $location.search().sys_id || c.options.sys_id || '';
 
     if (!sysId) {
-      c.state = 'denied';
+      c.state        = 'no_record';
+      c.errorMessage = 'No reference record found. Please contact an administrator.';
       return;
     }
 
     c.server.get({ action: 'init', sys_id: sysId }).then(function(r) {
       var d = r.data;
       if (d.state) {
-        c.state = d.state;   // 'denied' | 'submitted' | 'form'
+        c.state        = d.state;
+        c.errorMessage = d.errorMessage || '';
       } else {
-        c.state = 'denied';
+        c.state = 'no_record';
       }
     }).catch(function() {
-      c.state = 'denied';
+      c.state        = 'no_record';
+      c.errorMessage = 'An unexpected error occurred. Please contact an administrator.';
     });
   };
 
