@@ -1,5 +1,5 @@
 // ============================================================
-// HTML v1.1
+// HTML v1.2
 // ============================================================
 
 <div class="aw-password-widget">
@@ -13,7 +13,7 @@
 <!-- ===== NO RECORD ===== -->
 <div ng-if="c.state === 'no_record'" class="aw-state aw-denied">
   <div class="aw-icon-wrap denied-icon">
-    <span class="icon icon-close"></span>
+    <span class="aw-symbol">&#10007;</span>
   </div>
   <h2>No Record Found</h2>
   <p>{{c.errorMessage || 'No reference record found. Please contact an administrator.'}}</p>
@@ -22,7 +22,7 @@
   <!-- ===== WRONG TYPE ===== -->
   <div ng-if="c.state === 'wrong_type'" class="aw-state aw-denied">
     <div class="aw-icon-wrap denied-icon">
-      <span class="icon icon-close"></span>
+      <span class="aw-symbol">&#10007;</span>
     </div>
     <h2>No Password Required</h2>
     <p>This record does not need a password submitted. Password setup is only required for alarm additions.</p>
@@ -31,7 +31,7 @@
   <!-- ===== ACCESS DENIED ===== -->
   <div ng-if="c.state === 'denied'" class="aw-state aw-denied">
     <div class="aw-icon-wrap denied-icon">
-      <span class="icon icon-close"></span>
+      <span class="aw-symbol">&#10007;</span>
     </div>
     <h2>Access Restricted</h2>
     <p>Only the <strong>Opened For</strong> user assigned to this work order can view and submit this content.</p>
@@ -40,7 +40,7 @@
   <!-- ===== ALREADY SUBMITTED ===== -->
   <div ng-if="c.state === 'submitted'" class="aw-state aw-submitted">
     <div class="aw-icon-wrap submitted-icon">
-      <span class="icon icon-check"></span>
+      <span class="aw-symbol">&#10003;</span>
     </div>
     <h2>Password Already Submitted</h2>
     <p>A password has already been submitted to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
@@ -133,7 +133,7 @@
   <!-- ===== SUCCESS ===== -->
   <div ng-if="c.state === 'success'" class="aw-state aw-success">
     <div class="aw-icon-wrap success-icon">
-      <span class="icon icon-check"></span>
+      <span class="aw-symbol">&#10003;</span>
     </div>
     <h2>Thank You!</h2>
     <p>Your response has been sent to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
@@ -145,7 +145,7 @@
 
 
 // ============================================================
-// CSS v1.0
+// CSS v1.1
 // ============================================================
 
 /* =====================================================
@@ -204,6 +204,12 @@
 .submitted-icon { background: #fff7e6; color: #fa8c16; }
 .form-icon      { background: #e6f7ff; color: #1890ff; }
 .success-icon   { background: #f6ffed; color: #52c41a; }
+
+.aw-symbol {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
 
 /* ----- Loading ----- */
 .aw-loading p {
