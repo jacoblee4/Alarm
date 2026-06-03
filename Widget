@@ -1,0 +1,565 @@
+// HTML
+
+<div class="aw-password-widget">
+
+  <!-- ===== LOADING STATE ===== -->
+  <div ng-if="c.state === 'loading'" class="aw-state aw-loading">
+    <span class="aw-spinner"></span>
+    <p>Loading...</p>
+  </div>
+
+  <!-- ===== ACCESS DENIED ===== -->
+  <div ng-if="c.state === 'denied'" class="aw-state aw-denied">
+    <div class="aw-icon-wrap denied-icon">
+      <span class="icon icon-lock-closed"></span>
+    </div>
+    <h2>Access Restricted</h2>
+    <p>Only the <strong>Opened For</strong> user assigned to this work order can view and submit this content.</p>
+  </div>
+
+  <!-- ===== ALREADY SUBMITTED ===== -->
+  <div ng-if="c.state === 'submitted'" class="aw-state aw-submitted">
+    <div class="aw-icon-wrap submitted-icon">
+      <span class="icon icon-check-circle-fill"></span>
+    </div>
+    <h2>Password Already Submitted</h2>
+    <p>A password has already been submitted to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
+  </div>
+
+  <!-- ===== PASSWORD FORM ===== -->
+  <div ng-if="c.state === 'form'" class="aw-state aw-form">
+    <div class="aw-header">
+      <div class="aw-icon-wrap form-icon">
+        <span class="icon icon-lock-open"></span>
+      </div>
+      <h2>Set Your Alarm Password</h2>
+      <p class="aw-subtitle">Please create a password for your alarm system below.</p>
+    </div>
+
+    <!-- Password Field -->
+    <div class="aw-field-wrap">
+      <label class="aw-label" for="alarmPassword">Password</label>
+      <div class="aw-input-wrap" ng-class="{'has-error': c.touched && !c.valid, 'has-success': c.touched && c.valid}">
+        <input
+          id="alarmPassword"
+          type="{{c.showPassword ? 'text' : 'password'}}"
+          class="aw-input"
+          ng-model="c.password"
+          ng-change="c.onPasswordChange()"
+          ng-blur="c.onBlur()"
+          placeholder="Enter your password"
+          autocomplete="new-password"
+          maxlength="10"
+        />
+        <button class="aw-toggle-vis" ng-click="c.showPassword = !c.showPassword" type="button" aria-label="Toggle password visibility">
+          <span class="icon" ng-class="c.showPassword ? 'icon-eye-off' : 'icon-eye'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Requirements Checklist -->
+    <div class="aw-requirements">
+      <p class="aw-req-title">Password Requirements</p>
+      <ul class="aw-req-list">
+
+        <li class="aw-req-item" ng-class="c.rules.minLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
+          <span class="aw-req-icon">
+            <span ng-if="c.rules.minLength" class="icon icon-check-circle-fill"></span>
+            <span ng-if="!c.rules.minLength && c.touched" class="icon icon-x-circle-fill"></span>
+            <span ng-if="!c.rules.minLength && !c.touched" class="icon icon-circle"></span>
+          </span>
+          At least 4 characters
+        </li>
+
+        <li class="aw-req-item" ng-class="c.rules.maxLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
+          <span class="aw-req-icon">
+            <span ng-if="c.rules.maxLength" class="icon icon-check-circle-fill"></span>
+            <span ng-if="!c.rules.maxLength && c.touched" class="icon icon-x-circle-fill"></span>
+            <span ng-if="!c.rules.maxLength && !c.touched" class="icon icon-circle"></span>
+          </span>
+          No more than 10 characters
+        </li>
+
+        <li class="aw-req-item" ng-class="c.rules.lettersOnly ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
+          <span class="aw-req-icon">
+            <span ng-if="c.rules.lettersOnly" class="icon icon-check-circle-fill"></span>
+            <span ng-if="!c.rules.lettersOnly && c.touched" class="icon icon-x-circle-fill"></span>
+            <span ng-if="!c.rules.lettersOnly && !c.touched" class="icon icon-circle"></span>
+          </span>
+          Letters only — no numbers or special characters
+        </li>
+
+      </ul>
+    </div>
+
+    <!-- Error Banner -->
+    <div class="aw-error-banner" ng-if="c.serverError">
+      <span class="icon icon-alert-fill"></span>
+      {{c.serverError}}
+    </div>
+
+    <!-- Submit Button -->
+    <button
+      class="aw-submit-btn"
+      ng-click="c.submit()"
+      ng-disabled="!c.valid || c.submitting"
+      type="button"
+    >
+      <span ng-if="!c.submitting">Submit Password</span>
+      <span ng-if="c.submitting"><span class="aw-spinner aw-spinner-sm"></span> Submitting...</span>
+    </button>
+  </div>
+
+  <!-- ===== SUCCESS ===== -->
+  <div ng-if="c.state === 'success'" class="aw-state aw-success">
+    <div class="aw-icon-wrap success-icon">
+      <span class="icon icon-check-circle-fill"></span>
+    </div>
+    <h2>Thank You!</h2>
+    <p>Your response has been sent to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
+  </div>
+
+</div>
+
+
+
+
+//CSS
+
+/* =====================================================
+   Alarm Widget — Scoped Styles
+   ===================================================== */
+
+.aw-password-widget {
+  font-family: "Source Sans Pro", "Helvetica Neue", Arial, sans-serif;
+  max-width: 480px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+/* ----- Shared State Container ----- */
+.aw-state {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06);
+  padding: 40px 36px;
+  text-align: center;
+  animation: aw-fade-in 0.3s ease;
+}
+
+@keyframes aw-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.aw-state h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1f36;
+  margin: 16px 0 8px;
+}
+
+.aw-state p {
+  font-size: 15px;
+  color: #525f7f;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ----- Icon Circles ----- */
+.aw-icon-wrap {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 8px;
+  font-size: 32px;
+}
+
+.denied-icon    { background: #fff1f0; color: #f5222d; }
+.submitted-icon { background: #fff7e6; color: #fa8c16; }
+.form-icon      { background: #e6f7ff; color: #1890ff; }
+.success-icon   { background: #f6ffed; color: #52c41a; }
+
+/* ----- Loading ----- */
+.aw-loading p {
+  color: #8c8c8c;
+  margin-top: 12px;
+}
+
+.aw-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #e8e8e8;
+  border-top-color: #1890ff;
+  border-radius: 50%;
+  animation: aw-spin 0.75s linear infinite;
+  vertical-align: middle;
+}
+
+.aw-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+@keyframes aw-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ----- Form Layout ----- */
+.aw-form {
+  text-align: left;
+}
+
+.aw-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.aw-subtitle {
+  font-size: 14px;
+  color: #8c96b0;
+}
+
+/* ----- Field ----- */
+.aw-field-wrap {
+  margin-bottom: 20px;
+}
+
+.aw-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d4559;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.aw-input-wrap {
+  position: relative;
+  border-radius: 8px;
+  border: 1.5px solid #d9dde8;
+  background: #fafbfc;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.aw-input-wrap:focus-within {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.12);
+  background: #fff;
+}
+
+.aw-input-wrap.has-error {
+  border-color: #f5222d;
+  box-shadow: 0 0 0 3px rgba(245, 34, 45, 0.1);
+}
+
+.aw-input-wrap.has-success {
+  border-color: #52c41a;
+  box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.1);
+}
+
+.aw-input {
+  width: 100%;
+  padding: 11px 44px 11px 14px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #1a1f36;
+  outline: none;
+  box-sizing: border-box;
+  border-radius: 8px;
+  letter-spacing: 0.05em;
+}
+
+.aw-toggle-vis {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8c96b0;
+  padding: 4px;
+  line-height: 1;
+  font-size: 18px;
+  transition: color 0.2s;
+}
+
+.aw-toggle-vis:hover { color: #1890ff; }
+
+/* ----- Requirements List ----- */
+.aw-requirements {
+  background: #f5f7fa;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+}
+
+.aw-req-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8c96b0;
+  margin: 0 0 10px;
+}
+
+.aw-req-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.aw-req-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #525f7f;
+  padding: 5px 0;
+  transition: color 0.2s;
+}
+
+.aw-req-icon {
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.rule-neutral .aw-req-icon { color: #c0c8d8; }
+.rule-pass    { color: #2f9e44; }
+.rule-pass    .aw-req-icon { color: #52c41a; }
+.rule-fail    { color: #c92a2a; }
+.rule-fail    .aw-req-icon { color: #f5222d; }
+
+/* ----- Error Banner ----- */
+.aw-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff1f0;
+  border: 1px solid #ffa39e;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #c0392b;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ----- Submit Button ----- */
+.aw-submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s, opacity 0.2s, transform 0.1s;
+}
+
+.aw-submit-btn:hover:not([disabled]) {
+  background: #096dd9;
+  transform: translateY(-1px);
+}
+
+.aw-submit-btn:active:not([disabled]) {
+  transform: translateY(0);
+}
+
+.aw-submit-btn[disabled] {
+  background: #bdc5d4;
+  cursor: not-allowed;
+}
+
+
+
+// Client Script
+
+function() {
+  var c = this;
+
+  // ── State ──────────────────────────────────────────
+  // Possible values: 'loading' | 'denied' | 'submitted' | 'form' | 'success'
+  c.state       = 'loading';
+  c.password    = '';
+  c.showPassword = false;
+  c.touched     = false;
+  c.valid       = false;
+  c.submitting  = false;
+  c.serverError = '';
+
+  c.rules = {
+    minLength:   false,
+    maxLength:   false,
+    lettersOnly: false
+  };
+
+  // ── Init ───────────────────────────────────────────
+  c.$onInit = function() {
+    // Pull sys_id from URL params (e.g. ?sys_id=abc123)
+    var sysId = $location.search().sys_id || c.options.sys_id || '';
+
+    if (!sysId) {
+      c.state = 'denied';
+      return;
+    }
+
+    c.server.get({ action: 'init', sys_id: sysId }).then(function(r) {
+      var d = r.data;
+      if (d.state) {
+        c.state = d.state;   // 'denied' | 'submitted' | 'form'
+      } else {
+        c.state = 'denied';
+      }
+    }).catch(function() {
+      c.state = 'denied';
+    });
+  };
+
+  // ── Password Validation ────────────────────────────
+  c.onPasswordChange = function() {
+    var p = c.password || '';
+    c.rules.minLength   = p.length >= 4;
+    c.rules.maxLength   = p.length <= 10;
+    c.rules.lettersOnly = /^[A-Za-z]+$/.test(p) && p.length > 0;
+    c.valid = c.rules.minLength && c.rules.maxLength && c.rules.lettersOnly;
+  };
+
+  c.onBlur = function() {
+    c.touched = true;
+    c.onPasswordChange();
+  };
+
+  // ── Submit ─────────────────────────────────────────
+  c.submit = function() {
+    c.touched = true;
+    c.onPasswordChange();
+
+    if (!c.valid || c.submitting) return;
+
+    var sysId = $location.search().sys_id || c.options.sys_id || '';
+    c.submitting  = true;
+    c.serverError = '';
+
+    c.server.get({
+      action:   'submit',
+      sys_id:   sysId,
+      password: c.password
+    }).then(function(r) {
+      c.submitting = false;
+      if (r.data.success) {
+        c.state = 'success';
+      } else {
+        c.serverError = r.data.error || 'An unexpected error occurred. Please try again.';
+      }
+    }).catch(function() {
+      c.submitting  = false;
+      c.serverError = 'A server error occurred. Please try again.';
+    });
+  };
+}
+
+
+
+
+// Server Script
+
+(function() {
+  var action = input.action;
+  var sysId  = input.sys_id;
+
+  data.state   = '';
+  data.success = false;
+  data.error   = '';
+
+  // ── Guard: must have a sys_id ──────────────────────
+  if (!sysId) {
+    data.state = 'denied';
+    return;
+  }
+
+  // ── Load the work order record ─────────────────────
+  var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
+  if (!wo.get(sysId)) {
+    data.state = 'denied';
+    return;
+  }
+
+  // ── Check: already submitted? ──────────────────────
+  var alarmPassword = wo.getValue('alarm_password');
+  if (alarmPassword && alarmPassword.trim() !== '') {
+    data.state = 'submitted';
+    return;
+  }
+
+  // ── Check: logged-in user matches opened_for ───────
+  var openedForSysId = wo.getValue('x_banun_bunow_al_0_opened_for');
+  var currentUser    = gs.getUserID();
+
+  if (openedForSysId !== currentUser) {
+    data.state = 'denied';
+    return;
+  }
+
+  // ── INIT action ────────────────────────────────────
+  if (action === 'init') {
+    data.state = 'form';
+    return;
+  }
+
+  // ── SUBMIT action ──────────────────────────────────
+  if (action === 'submit') {
+    var password = input.password || '';
+
+    // Server-side validation (never trust client alone)
+    if (!password.match(/^[A-Za-z]{4,10}$/)) {
+      data.success = false;
+      data.error   = 'Invalid password. Must be 4–10 letters with no numbers or special characters.';
+      return;
+    }
+
+    // Re-check it hasn't been submitted since page load
+    wo.query(); // refresh
+    if (!wo.next()) {
+      data.success = false;
+      data.error   = 'Work order record could not be found.';
+      return;
+    }
+
+    var latestPw = wo.getValue('alarm_password');
+    if (latestPw && latestPw.trim() !== '') {
+      data.success = false;
+      data.state   = 'submitted';
+      data.error   = 'A password has already been submitted for this record.';
+      return;
+    }
+
+    // Write the password to the record
+    wo.setValue('alarm_password', password);
+    wo.update();
+
+    data.success = true;
+    return;
+  }
+
+  // Fallback
+  data.state = 'denied';
+
+})();
+
