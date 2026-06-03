@@ -1,5 +1,5 @@
 // ============================================================
-// HTML v1.5
+// HTML v1.6
 // ============================================================
 
 <div class="aw-password-widget">
@@ -62,7 +62,38 @@
           <i class="fa fa-unlock"></i>
         </div>
         <h2>Set Your Alarm Password</h2>
-        <p class="aw-subtitle">Please create a password for your alarm system below.</p>
+        <p class="aw-subtitle">Please create a password for your alarm code below.</p>
+      </div>
+
+      <!-- Requirements Checklist -->
+      <div class="aw-requirements">
+        <p class="aw-req-title">Password Requirements</p>
+        <ul class="aw-req-list">
+          <li class="aw-req-item" ng-class="!c.password ? 'rule-neutral' : (c.rules.minLength ? 'rule-pass' : 'rule-fail')">
+            <span class="aw-req-icon">
+              <i ng-if="!c.password" class="fa fa-circle-o"></i>
+              <i ng-if="c.password && c.rules.minLength" class="fa fa-check"></i>
+              <i ng-if="c.password && !c.rules.minLength" class="fa fa-times"></i>
+            </span>
+            Minimum 4 letters
+          </li>
+          <li class="aw-req-item" ng-class="!c.password ? 'rule-neutral' : (c.rules.maxLength ? 'rule-pass' : 'rule-fail')">
+            <span class="aw-req-icon">
+              <i ng-if="!c.password" class="fa fa-circle-o"></i>
+              <i ng-if="c.password && c.rules.maxLength" class="fa fa-check"></i>
+              <i ng-if="c.password && !c.rules.maxLength" class="fa fa-times"></i>
+            </span>
+            Maximum 10 letters
+          </li>
+          <li class="aw-req-item" ng-class="!c.password ? 'rule-neutral' : (c.rules.lettersOnly ? 'rule-pass' : 'rule-fail')">
+            <span class="aw-req-icon">
+              <i ng-if="!c.password" class="fa fa-circle-o"></i>
+              <i ng-if="c.password && c.rules.lettersOnly" class="fa fa-check"></i>
+              <i ng-if="c.password && !c.rules.lettersOnly" class="fa fa-times"></i>
+            </span>
+            Letters only — no numbers or special characters
+          </li>
+        </ul>
       </div>
 
       <!-- Password Field -->
@@ -84,37 +115,6 @@
             <i ng-class="c.showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
           </button>
         </div>
-      </div>
-
-      <!-- Requirements Checklist -->
-      <div class="aw-requirements">
-        <p class="aw-req-title">Password Requirements</p>
-        <ul class="aw-req-list">
-          <li class="aw-req-item" ng-class="c.rules.minLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
-            <span class="aw-req-icon">
-              <i ng-if="c.rules.minLength" class="fa fa-check"></i>
-              <i ng-if="!c.rules.minLength && c.touched" class="fa fa-times"></i>
-              <i ng-if="!c.rules.minLength && !c.touched" class="fa fa-circle-o"></i>
-            </span>
-            At least 4 characters
-          </li>
-          <li class="aw-req-item" ng-class="c.rules.maxLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
-            <span class="aw-req-icon">
-              <i ng-if="c.rules.maxLength" class="fa fa-check"></i>
-              <i ng-if="!c.rules.maxLength && c.touched" class="fa fa-times"></i>
-              <i ng-if="!c.rules.maxLength && !c.touched" class="fa fa-circle-o"></i>
-            </span>
-            No more than 10 characters
-          </li>
-          <li class="aw-req-item" ng-class="c.rules.lettersOnly ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
-            <span class="aw-req-icon">
-              <i ng-if="c.rules.lettersOnly" class="fa fa-check"></i>
-              <i ng-if="!c.rules.lettersOnly && c.touched" class="fa fa-times"></i>
-              <i ng-if="!c.rules.lettersOnly && !c.touched" class="fa fa-circle-o"></i>
-            </span>
-            Letters only — no numbers or special characters
-          </li>
-        </ul>
       </div>
 
       <!-- Error Banner -->
