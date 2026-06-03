@@ -19,6 +19,15 @@
   <p>{{c.errorMessage || 'No reference record found. Please contact an administrator.'}}</p>
 </div>
 
+  <!-- ===== WRONG TYPE ===== -->
+  <div ng-if="c.state === 'wrong_type'" class="aw-state aw-denied">
+    <div class="aw-icon-wrap denied-icon">
+      <span class="icon icon-alert-fill"></span>
+    </div>
+    <h2>No Password Required</h2>
+    <p>This record does not need a password submitted. Password setup is only required for alarm additions.</p>
+  </div>
+
   <!-- ===== ACCESS DENIED ===== -->
   <div ng-if="c.state === 'denied'" class="aw-state aw-denied">
     <div class="aw-icon-wrap denied-icon">
@@ -527,6 +536,13 @@ api.controller = function($location) {
   var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
   if (!wo.get(sysId)) {
     data.state = 'denied';
+    return;
+  }
+
+  // ── Check: request type must be 'add' ─────────────
+  var requestType = wo.getValue('request_type');
+  if (!requestType || requestType.toLowerCase() !== 'add') {
+    data.state = 'wrong_type';
     return;
   }
 
