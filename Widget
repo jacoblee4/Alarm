@@ -400,18 +400,18 @@
 
 // Client Script
 
-function() {
+api.controller = function($location) {
   var c = this;
 
   // ── State ──────────────────────────────────────────
-  // Possible values: 'loading' | 'denied' | 'submitted' | 'form' | 'success'
-  c.state       = 'loading';
-  c.password    = '';
+  c.state        = 'loading';
+  c.password     = '';
   c.showPassword = false;
-  c.touched     = false;
-  c.valid       = false;
-  c.submitting  = false;
-  c.serverError = '';
+  c.touched      = false;
+  c.valid        = false;
+  c.submitting   = false;
+  c.serverError  = '';
+  c.errorMessage = '';
 
   c.rules = {
     minLength:   false,
@@ -421,7 +421,6 @@ function() {
 
   // ── Init ───────────────────────────────────────────
   c.$onInit = function() {
-    // Pull sys_id from URL params (e.g. ?sys_id=abc123)
     var sysId = $location.search().sys_id || c.options.sys_id || '';
 
     if (!sysId) {
@@ -432,11 +431,12 @@ function() {
 
     c.server.get({ action: 'init', sys_id: sysId }).then(function(r) {
       var d = r.data;
-      if (d.state) {
+      if (d && d.state) {
         c.state        = d.state;
         c.errorMessage = d.errorMessage || '';
       } else {
-        c.state = 'no_record';
+        c.state        = 'no_record';
+        c.errorMessage = 'Unexpected response. Please contact an administrator.';
       }
     }).catch(function() {
       c.state        = 'no_record';
@@ -485,7 +485,8 @@ function() {
       c.serverError = 'A server error occurred. Please try again.';
     });
   };
-}
+
+};
 
 
 
