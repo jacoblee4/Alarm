@@ -497,7 +497,7 @@ api.controller = function($location) {
 
 
 // ============================================================
-// Server Script v1.0
+// Server Script v1.1
 // ============================================================
 
 (function() {
@@ -569,15 +569,15 @@ api.controller = function($location) {
       return;
     }
 
-    // Re-check it hasn't been submitted since page load
-    wo.query(); // refresh
-    if (!wo.next()) {
+    // Re-fetch to confirm it hasn't been submitted since page load
+    var fresh = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    if (!fresh.get(sysId)) {
       data.success = false;
       data.error   = 'Work order record could not be found.';
       return;
     }
 
-    var latestPw = wo.getValue('alarm_password');
+    var latestPw = fresh.getValue('alarm_password');
     if (latestPw && latestPw.trim() !== '') {
       data.success = false;
       data.state   = 'submitted';
@@ -586,8 +586,8 @@ api.controller = function($location) {
     }
 
     // Write the password to the record
-    wo.setValue('alarm_password', password);
-    wo.update();
+    fresh.setValue('alarm_password', password);
+    fresh.update();
 
     data.success = true;
     return;
