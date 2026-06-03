@@ -497,7 +497,7 @@ api.controller = function($location) {
 
 
 // ============================================================
-// Server Script v1.1
+// Server Script v1.2
 // ============================================================
 
 (function() {
@@ -585,8 +585,8 @@ api.controller = function($location) {
       return;
     }
 
-    // TEST: writing to description to confirm update works
-    fresh.setValue('description', password);
+    // Write the password to the encrypted field
+    fresh.setDisplayValue('alarm_password', password);
     fresh.update();
 
     data.success = true;
