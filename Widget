@@ -1,142 +1,149 @@
 // ============================================================
-// HTML v1.4
+// HTML v1.5
 // ============================================================
 
 <div class="aw-password-widget">
 
-  <!-- ===== LOADING STATE ===== -->
-  <div ng-if="c.state === 'loading'" class="aw-state aw-loading">
-    <i class="fa fa-spinner fa-spin fa-2x"></i>
-    <p>Loading...</p>
-  </div>
+  <div class="aw-state"
+    ng-class="{
+      'aw-loading':   c.state === 'loading',
+      'aw-denied':    c.state === 'no_record' || c.state === 'wrong_type' || c.state === 'denied',
+      'aw-submitted': c.state === 'submitted',
+      'aw-form':      c.state === 'form',
+      'aw-success':   c.state === 'success'
+    }">
 
-<!-- ===== NO RECORD ===== -->
-<div ng-if="c.state === 'no_record'" class="aw-state aw-denied">
-  <div class="aw-icon-wrap denied-icon">
-    <i class="fa fa-times-circle"></i>
-  </div>
-  <h2>No Record Found</h2>
-  <p>{{c.errorMessage || 'No reference record found. Please contact an administrator.'}}</p>
-</div>
-
-  <!-- ===== WRONG TYPE ===== -->
-  <div ng-if="c.state === 'wrong_type'" class="aw-state aw-denied">
-    <div class="aw-icon-wrap denied-icon">
-      <i class="fa fa-times-circle"></i>
+    <!-- ===== LOADING ===== -->
+    <div ng-if="c.state === 'loading'" class="aw-state-content">
+      <i class="fa fa-spinner fa-spin fa-2x"></i>
+      <p>Loading...</p>
     </div>
-    <h2>No Password Required</h2>
-    <p>This record does not need a password submitted. Password setup is only required for alarm additions.</p>
-  </div>
 
-  <!-- ===== ACCESS DENIED ===== -->
-  <div ng-if="c.state === 'denied'" class="aw-state aw-denied">
-    <div class="aw-icon-wrap denied-icon">
-      <i class="fa fa-times-circle"></i>
-    </div>
-    <h2>Access Restricted</h2>
-    <p>Only the <strong>Opened For</strong> user assigned to this work order can view and submit this content.</p>
-  </div>
-
-  <!-- ===== ALREADY SUBMITTED ===== -->
-  <div ng-if="c.state === 'submitted'" class="aw-state aw-submitted">
-    <div class="aw-icon-wrap submitted-icon">
-      <i class="fa fa-check-circle"></i>
-    </div>
-    <h2>Password Already Submitted</h2>
-    <p>A password has already been submitted to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
-  </div>
-
-  <!-- ===== PASSWORD FORM ===== -->
-  <div ng-if="c.state === 'form'" class="aw-state aw-form">
-    <div class="aw-header">
-      <div class="aw-icon-wrap form-icon">
-        <i class="fa fa-unlock"></i>
+    <!-- ===== NO RECORD ===== -->
+    <div ng-if="c.state === 'no_record'" class="aw-state-content">
+      <div class="aw-icon-wrap denied-icon">
+        <i class="fa fa-times-circle"></i>
       </div>
-      <h2>Set Your Alarm Password</h2>
-      <p class="aw-subtitle">Please create a password for your alarm system below.</p>
+      <h2>No Record Found</h2>
+      <p>{{c.errorMessage || 'No reference record found. Please contact an administrator.'}}</p>
     </div>
 
-    <!-- Password Field -->
-    <div class="aw-field-wrap">
-      <label class="aw-label" for="alarmPassword">Password</label>
-      <div class="aw-input-wrap" ng-class="{'has-error': c.touched && !c.valid, 'has-success': c.touched && c.valid}">
-        <input
-          id="alarmPassword"
-          type="{{c.showPassword ? 'text' : 'password'}}"
-          class="aw-input"
-          ng-model="c.password"
-          ng-change="c.onPasswordChange()"
-          ng-blur="c.onBlur()"
-          placeholder="Enter your password"
-          autocomplete="new-password"
-          maxlength="10"
-        />
-        <button class="aw-toggle-vis" ng-click="c.showPassword = !c.showPassword" type="button" aria-label="Toggle password visibility">
-          <i ng-class="c.showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-        </button>
+    <!-- ===== WRONG TYPE ===== -->
+    <div ng-if="c.state === 'wrong_type'" class="aw-state-content">
+      <div class="aw-icon-wrap denied-icon">
+        <i class="fa fa-times-circle"></i>
       </div>
+      <h2>No Password Required</h2>
+      <p>This record does not need a password submitted. Password setup is only required for alarm additions.</p>
     </div>
 
-    <!-- Requirements Checklist -->
-    <div class="aw-requirements">
-      <p class="aw-req-title">Password Requirements</p>
-      <ul class="aw-req-list">
-
-        <li class="aw-req-item" ng-class="c.rules.minLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
-          <span class="aw-req-icon">
-            <i ng-if="c.rules.minLength" class="fa fa-check"></i>
-            <i ng-if="!c.rules.minLength && c.touched" class="fa fa-times"></i>
-            <i ng-if="!c.rules.minLength && !c.touched" class="fa fa-circle-o"></i>
-          </span>
-          At least 4 characters
-        </li>
-
-        <li class="aw-req-item" ng-class="c.rules.maxLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
-          <span class="aw-req-icon">
-            <i ng-if="c.rules.maxLength" class="fa fa-check"></i>
-            <i ng-if="!c.rules.maxLength && c.touched" class="fa fa-times"></i>
-            <i ng-if="!c.rules.maxLength && !c.touched" class="fa fa-circle-o"></i>
-          </span>
-          No more than 10 characters
-        </li>
-
-        <li class="aw-req-item" ng-class="c.rules.lettersOnly ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
-          <span class="aw-req-icon">
-            <i ng-if="c.rules.lettersOnly" class="fa fa-check"></i>
-            <i ng-if="!c.rules.lettersOnly && c.touched" class="fa fa-times"></i>
-            <i ng-if="!c.rules.lettersOnly && !c.touched" class="fa fa-circle-o"></i>
-          </span>
-          Letters only — no numbers or special characters
-        </li>
-
-      </ul>
+    <!-- ===== ACCESS DENIED ===== -->
+    <div ng-if="c.state === 'denied'" class="aw-state-content">
+      <div class="aw-icon-wrap denied-icon">
+        <i class="fa fa-times-circle"></i>
+      </div>
+      <h2>Access Restricted</h2>
+      <p>Only the <strong>Opened For</strong> user assigned to this work order can view and submit this content.</p>
     </div>
 
-    <!-- Error Banner -->
-    <div class="aw-error-banner" ng-if="c.serverError">
-      <i class="fa fa-exclamation-triangle"></i>
-      {{c.serverError}}
+    <!-- ===== ALREADY SUBMITTED ===== -->
+    <div ng-if="c.state === 'submitted'" class="aw-state-content">
+      <div class="aw-icon-wrap submitted-icon">
+        <i class="fa fa-check-circle"></i>
+      </div>
+      <h2>Password Already Submitted</h2>
+      <p>A password has already been submitted to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
     </div>
 
-    <!-- Submit Button -->
-    <button
-      class="aw-submit-btn"
-      ng-click="c.submit()"
-      ng-disabled="!c.valid || c.submitting"
-      type="button"
-    >
-      <span ng-if="!c.submitting">Submit Password</span>
-      <span ng-if="c.submitting"><i class="fa fa-spinner fa-spin"></i> Submitting...</span>
-    </button>
-  </div>
+    <!-- ===== PASSWORD FORM ===== -->
+    <div ng-if="c.state === 'form'" class="aw-state-content">
+      <div class="aw-header">
+        <div class="aw-icon-wrap form-icon">
+          <i class="fa fa-unlock"></i>
+        </div>
+        <h2>Set Your Alarm Password</h2>
+        <p class="aw-subtitle">Please create a password for your alarm system below.</p>
+      </div>
 
-  <!-- ===== SUCCESS ===== -->
-  <div ng-if="c.state === 'success'" class="aw-state aw-success">
-    <div class="aw-icon-wrap success-icon">
-      <i class="fa fa-check-circle"></i>
+      <!-- Password Field -->
+      <div class="aw-field-wrap">
+        <label class="aw-label" for="alarmPassword">Password</label>
+        <div class="aw-input-wrap" ng-class="{'has-error': c.touched && !c.valid, 'has-success': c.touched && c.valid}">
+          <input
+            id="alarmPassword"
+            type="{{c.showPassword ? 'text' : 'password'}}"
+            class="aw-input"
+            ng-model="c.password"
+            ng-change="c.onPasswordChange()"
+            ng-blur="c.onBlur()"
+            placeholder="Enter your password"
+            autocomplete="new-password"
+            maxlength="10"
+          />
+          <button class="aw-toggle-vis" ng-click="c.showPassword = !c.showPassword" type="button" aria-label="Toggle password visibility">
+            <i ng-class="c.showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Requirements Checklist -->
+      <div class="aw-requirements">
+        <p class="aw-req-title">Password Requirements</p>
+        <ul class="aw-req-list">
+          <li class="aw-req-item" ng-class="c.rules.minLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
+            <span class="aw-req-icon">
+              <i ng-if="c.rules.minLength" class="fa fa-check"></i>
+              <i ng-if="!c.rules.minLength && c.touched" class="fa fa-times"></i>
+              <i ng-if="!c.rules.minLength && !c.touched" class="fa fa-circle-o"></i>
+            </span>
+            At least 4 characters
+          </li>
+          <li class="aw-req-item" ng-class="c.rules.maxLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
+            <span class="aw-req-icon">
+              <i ng-if="c.rules.maxLength" class="fa fa-check"></i>
+              <i ng-if="!c.rules.maxLength && c.touched" class="fa fa-times"></i>
+              <i ng-if="!c.rules.maxLength && !c.touched" class="fa fa-circle-o"></i>
+            </span>
+            No more than 10 characters
+          </li>
+          <li class="aw-req-item" ng-class="c.rules.lettersOnly ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
+            <span class="aw-req-icon">
+              <i ng-if="c.rules.lettersOnly" class="fa fa-check"></i>
+              <i ng-if="!c.rules.lettersOnly && c.touched" class="fa fa-times"></i>
+              <i ng-if="!c.rules.lettersOnly && !c.touched" class="fa fa-circle-o"></i>
+            </span>
+            Letters only — no numbers or special characters
+          </li>
+        </ul>
+      </div>
+
+      <!-- Error Banner -->
+      <div class="aw-error-banner" ng-if="c.serverError">
+        <i class="fa fa-exclamation-triangle"></i>
+        {{c.serverError}}
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        class="aw-submit-btn"
+        ng-click="c.submit()"
+        ng-disabled="!c.valid || c.submitting"
+        type="button"
+      >
+        <span ng-if="!c.submitting">Submit Password</span>
+        <span ng-if="c.submitting"><i class="fa fa-spinner fa-spin"></i> Submitting...</span>
+      </button>
     </div>
-    <h2>Thank You!</h2>
-    <p>Your response has been sent to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
+
+    <!-- ===== SUCCESS ===== -->
+    <div ng-if="c.state === 'success'" class="aw-state-content">
+      <div class="aw-icon-wrap success-icon">
+        <i class="fa fa-check-circle"></i>
+      </div>
+      <h2>Thank You!</h2>
+      <p>Your response has been sent to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
+    </div>
+
   </div>
 
 </div>
@@ -145,7 +152,7 @@
 
 
 // ============================================================
-// CSS v1.2
+// CSS v1.3
 // ============================================================
 
 /* =====================================================
@@ -166,12 +173,15 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.06);
   padding: 40px 36px;
   text-align: center;
-  animation: aw-fade-in 0.3s ease;
+}
+
+.aw-state-content {
+  animation: aw-fade-in 0.25s ease;
 }
 
 @keyframes aw-fade-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0);    }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .aw-state h2 {
