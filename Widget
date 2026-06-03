@@ -1,12 +1,12 @@
 // ============================================================
-// HTML v1.3
+// HTML v1.4
 // ============================================================
 
 <div class="aw-password-widget">
 
   <!-- ===== LOADING STATE ===== -->
   <div ng-if="c.state === 'loading'" class="aw-state aw-loading">
-    <span class="aw-spinner"></span>
+    <i class="fa fa-spinner fa-spin fa-2x"></i>
     <p>Loading...</p>
   </div>
 
@@ -50,7 +50,7 @@
   <div ng-if="c.state === 'form'" class="aw-state aw-form">
     <div class="aw-header">
       <div class="aw-icon-wrap form-icon">
-        <span class="icon icon-lock-open"></span>
+        <i class="fa fa-unlock"></i>
       </div>
       <h2>Set Your Alarm Password</h2>
       <p class="aw-subtitle">Please create a password for your alarm system below.</p>
@@ -72,7 +72,7 @@
           maxlength="10"
         />
         <button class="aw-toggle-vis" ng-click="c.showPassword = !c.showPassword" type="button" aria-label="Toggle password visibility">
-          <span class="icon" ng-class="c.showPassword ? 'icon-eye-off' : 'icon-eye'"></span>
+          <i ng-class="c.showPassword ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
         </button>
       </div>
     </div>
@@ -84,27 +84,27 @@
 
         <li class="aw-req-item" ng-class="c.rules.minLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
           <span class="aw-req-icon">
-            <span ng-if="c.rules.minLength" class="icon icon-check-circle-fill"></span>
-            <span ng-if="!c.rules.minLength && c.touched" class="icon icon-x-circle-fill"></span>
-            <span ng-if="!c.rules.minLength && !c.touched" class="icon icon-circle"></span>
+            <i ng-if="c.rules.minLength" class="fa fa-check"></i>
+            <i ng-if="!c.rules.minLength && c.touched" class="fa fa-times"></i>
+            <i ng-if="!c.rules.minLength && !c.touched" class="fa fa-circle-o"></i>
           </span>
           At least 4 characters
         </li>
 
         <li class="aw-req-item" ng-class="c.rules.maxLength ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
           <span class="aw-req-icon">
-            <span ng-if="c.rules.maxLength" class="icon icon-check-circle-fill"></span>
-            <span ng-if="!c.rules.maxLength && c.touched" class="icon icon-x-circle-fill"></span>
-            <span ng-if="!c.rules.maxLength && !c.touched" class="icon icon-circle"></span>
+            <i ng-if="c.rules.maxLength" class="fa fa-check"></i>
+            <i ng-if="!c.rules.maxLength && c.touched" class="fa fa-times"></i>
+            <i ng-if="!c.rules.maxLength && !c.touched" class="fa fa-circle-o"></i>
           </span>
           No more than 10 characters
         </li>
 
         <li class="aw-req-item" ng-class="c.rules.lettersOnly ? 'rule-pass' : (c.touched ? 'rule-fail' : 'rule-neutral')">
           <span class="aw-req-icon">
-            <span ng-if="c.rules.lettersOnly" class="icon icon-check-circle-fill"></span>
-            <span ng-if="!c.rules.lettersOnly && c.touched" class="icon icon-x-circle-fill"></span>
-            <span ng-if="!c.rules.lettersOnly && !c.touched" class="icon icon-circle"></span>
+            <i ng-if="c.rules.lettersOnly" class="fa fa-check"></i>
+            <i ng-if="!c.rules.lettersOnly && c.touched" class="fa fa-times"></i>
+            <i ng-if="!c.rules.lettersOnly && !c.touched" class="fa fa-circle-o"></i>
           </span>
           Letters only — no numbers or special characters
         </li>
@@ -114,7 +114,7 @@
 
     <!-- Error Banner -->
     <div class="aw-error-banner" ng-if="c.serverError">
-      <span class="icon icon-alert-fill"></span>
+      <i class="fa fa-exclamation-triangle"></i>
       {{c.serverError}}
     </div>
 
@@ -126,7 +126,7 @@
       type="button"
     >
       <span ng-if="!c.submitting">Submit Password</span>
-      <span ng-if="c.submitting"><span class="aw-spinner aw-spinner-sm"></span> Submitting...</span>
+      <span ng-if="c.submitting"><i class="fa fa-spinner fa-spin"></i> Submitting...</span>
     </button>
   </div>
 
@@ -145,7 +145,7 @@
 
 
 // ============================================================
-// CSS v1.1
+// CSS v1.2
 // ============================================================
 
 /* =====================================================
@@ -205,37 +205,10 @@
 .form-icon      { background: #e6f7ff; color: #1890ff; }
 .success-icon   { background: #f6ffed; color: #52c41a; }
 
-.aw-symbol {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
-}
-
 /* ----- Loading ----- */
 .aw-loading p {
   color: #8c8c8c;
   margin-top: 12px;
-}
-
-.aw-spinner {
-  display: inline-block;
-  width: 28px;
-  height: 28px;
-  border: 3px solid #e8e8e8;
-  border-top-color: #1890ff;
-  border-radius: 50%;
-  animation: aw-spin 0.75s linear infinite;
-  vertical-align: middle;
-}
-
-.aw-spinner-sm {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
-
-@keyframes aw-spin {
-  to { transform: rotate(360deg); }
 }
 
 /* ----- Form Layout ----- */
