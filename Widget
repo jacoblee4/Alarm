@@ -8,6 +8,15 @@
     <p>Loading...</p>
   </div>
 
+<!-- ===== NO RECORD ===== -->
+<div ng-if="c.state === 'no_record'" class="aw-state aw-denied">
+  <div class="aw-icon-wrap denied-icon">
+    <span class="icon icon-alert-fill"></span>
+  </div>
+  <h2>No Record Found</h2>
+  <p>{{c.errorMessage || 'No reference record found. Please contact an administrator.'}}</p>
+</div>
+
   <!-- ===== ACCESS DENIED ===== -->
   <div ng-if="c.state === 'denied'" class="aw-state aw-denied">
     <div class="aw-icon-wrap denied-icon">
@@ -481,16 +490,24 @@ function() {
 // Server Script
 
 (function() {
-  var action = input.action;
-  var sysId  = input.sys_id;
-
   data.state   = '';
   data.success = false;
   data.error   = '';
 
+  // ── Guard: input object safety check ──────────────
+  if (!input || typeof input !== 'object') {
+    data.state        = 'no_record';
+    data.errorMessage = 'No reference record found. Please contact an administrator.';
+    return;
+  }
+
+  var action = input.action;
+  var sysId  = input.sys_id;
+
   // ── Guard: must have a sys_id ──────────────────────
   if (!sysId) {
-    data.state = 'denied';
+    data.state        = 'no_record';
+    data.errorMessage = 'No reference record found. Please contact an administrator.';
     return;
   }
 
