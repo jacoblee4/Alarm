@@ -1,5 +1,5 @@
 // ============================================================
-// HTML v1.6
+// HTML v1.7
 // ============================================================
 
 <div class="aw-password-widget">
@@ -7,7 +7,7 @@
   <div class="aw-state"
     ng-class="{
       'aw-loading':   c.state === 'loading',
-      'aw-denied':    c.state === 'no_record' || c.state === 'wrong_type' || c.state === 'denied',
+      'aw-denied':    c.state === 'no_record' || c.state === 'wrong_type' || c.state === 'denied' || c.state === 'error',
       'aw-submitted': c.state === 'submitted',
       'aw-form':      c.state === 'form',
       'aw-success':   c.state === 'success'
@@ -142,6 +142,15 @@
       </div>
       <h2>Thank You!</h2>
       <p>Your response has been sent to the alarm panel team. Please wait for a follow-up email indicating your alarm code and password have been created.</p>
+    </div>
+
+    <!-- ===== ERROR ===== -->
+    <div ng-if="c.state === 'error'" class="aw-state-content">
+      <div class="aw-icon-wrap denied-icon">
+        <i class="fa fa-times-circle"></i>
+      </div>
+      <h2>Something Went Wrong</h2>
+      <p>Your password could not be saved. Please contact an administrator for assistance.</p>
     </div>
 
   </div>
@@ -401,7 +410,7 @@
 
 
 // ============================================================
-// Client Script v1.1
+// Client Script v1.2
 // ============================================================
 
 api.controller = function($location) {
@@ -482,12 +491,14 @@ api.controller = function($location) {
       c.submitting = false;
       if (r.data.success) {
         c.state = 'success';
+      } else if (r.data.state === 'error') {
+        c.state = 'error';
       } else {
         c.serverError = r.data.error || 'An unexpected error occurred. Please try again.';
       }
     }).catch(function() {
-      c.submitting  = false;
-      c.serverError = 'A server error occurred. Please try again.';
+      c.submitting = false;
+      c.state      = 'error';
     });
   };
 
@@ -497,7 +508,7 @@ api.controller = function($location) {
 
 
 // ============================================================
-// Server Script v1.3
+// Server Script v1.4
 // ============================================================
 
 (function() {
@@ -586,8 +597,19 @@ api.controller = function($location) {
     }
 
     // Write the password to the record
-    fresh.setValue('alarm_password', password);
-    fresh.update();
+    try {
+      fresh.setValue('alarm_password', password);
+      var updateResult = fresh.update();
+      if (!updateResult) {
+        data.success = false;
+        data.state   = 'error';
+        return;
+      }
+    } catch(e) {
+      data.success = false;
+      data.state   = 'error';
+      return;
+    }
 
     data.success = true;
     return;
