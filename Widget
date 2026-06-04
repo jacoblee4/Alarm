@@ -508,7 +508,7 @@ api.controller = function($location) {
 
 
 // ============================================================
-// Server Script v1.4
+// Server Script v1.5
 // ============================================================
 
 (function() {
@@ -597,15 +597,12 @@ api.controller = function($location) {
     }
 
     // Write the password to the record
-    try {
-      fresh.setValue('alarm_password', password);
-      var updateResult = fresh.update();
-      if (!updateResult) {
-        data.success = false;
-        data.state   = 'error';
-        return;
-      }
-    } catch(e) {
+    fresh.setValue('alarm_password', password);
+    fresh.update();
+
+    // Verify the encrypted field was actually written by re-reading it
+    var verify = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    if (!verify.get(sysId) || !verify.getValue('alarm_password')) {
       data.success = false;
       data.state   = 'error';
       return;
