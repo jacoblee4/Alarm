@@ -1,0 +1,155 @@
+var AlarmCodeHelper = Class.create();
+AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+
+    // Retrieves the 'issue_at_branch' field for a given alarm code
+    getIssueAtBranch: function() {
+        var alarmCode = this.getParameter('sysparm_alarm_code');
+        if (!alarmCode)
+            return '';
+
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.get(alarmCode);
+        return gr.issue_at_branch;
+
+    },
+
+    // Checks if an alarm code exists for a given employee
+    hasAlarmCode: function() {
+        var employeeName = this.getParameter('sysparm_employee');
+
+        if (!employeeName)
+            return 'false';
+
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('employee', employeeName);
+        gr.setLimit(1);
+        gr.query();
+
+        return gr.hasNext() ? 'true' : 'false';
+    },
+
+
+    /**
+     * Generates a unique 4-digit alarm code
+     * (Used by the UI Action)
+     */
+    generateUniqueCode: function() {
+        // Maximum number of attempts to generate a unique code
+        var maxAttempts = 50;
+
+        // Try generating a unique code up to maxAttempts times
+        for (var i = 0; i < maxAttempts; i++) {
+            var code = this._generateCode();
+
+            // If the generated code does not exist, return it
+            if (!this._codeExists(code)) {
+                return code;
+            }
+        }
+
+        // Return "ERROR" if unable to generate a unique code
+        return "ERROR";
+    },
+
+    /**
+     * Checks if an alarm code is already in use
+     * by another employee (excluding same opened_for)
+     * (Used by onChange Client Script)
+     */
+    checkCodeInUse: function() {
+        var code = this.getParameter('sysparm_alarm_code');
+        var openedFor = this.getParameter('sysparm_opened_for');
+
+        // Guard clause
+        if (!code || !/^\d{4}$/.test(code)) {
+            return "AVAILABLE";
+        }
+
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('alarm_code', code);
+
+        // Exclude same employee
+        if (openedFor) {
+            gr.addQuery('employee', '!=', openedFor);
+        }
+
+        gr.setLimit(1);
+        gr.query();
+
+        return gr.hasNext() ? "IN_USE" : "AVAILABLE";
+    },
+
+    /* =====================
+       Private helper methods
+       ===================== */
+
+	// Generate a 4 digit code with restrictions
+    _generateCode: function() {
+        var allowedFirstDigits = [1, 2, 3, 4, 5, 6, 8, 9]; // no 0 or 7
+        var maxAttempts = 50; // hard stop for safety
+        var attempt = 0;
+
+        while (attempt < maxAttempts) {
+            attempt++;
+
+            // First digit (no 0 or 7)
+            var firstDigit = allowedFirstDigits[
+                Math.floor(Math.random() * allowedFirstDigits.length)
+            ];
+
+            // Remaining digits
+            var remaining = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+            var code = String(firstDigit) + remaining;
+
+            // ---- Rule: block 911 ----
+            if (code.indexOf('911') !== -1) {
+                continue;
+            }
+
+            var digits = code.split('').map(function(d) {
+                return parseInt(d, 10);
+            });
+
+            // ---- Rule: block sequential ----
+            var d1 = digits[1] - digits[0];
+            var d2 = digits[2] - digits[1];
+            var d3 = digits[3] - digits[2];
+
+            if (
+                (d1 === 1 && d2 === 1 && d3 === 1) ||
+                (d1 === -1 && d2 === -1 && d3 === -1)
+            ) {
+                continue;
+            }
+
+            // ---- Rule: block ≤ 2 unique digits ----
+            var unique = {};
+            for (var i = 0; i < digits.length; i++) {
+                unique[digits[i]] = true;
+            }
+
+            if (Object.keys(unique).length <= 2) {
+                continue;
+            }
+
+            // Passed all rules
+            return code;
+        }
+
+        // Defensive fallback (should never realistically happen)
+        return null;
+    },
+
+
+    _codeExists: function(code) {
+        // Check if the code exists in the alarm codes table
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('alarm_code', code);
+        gr.setLimit(1);
+        gr.query();
+        return gr.hasNext();
+    },
+
+
+    type: 'AlarmCodeHelper'
+});
