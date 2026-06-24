@@ -4,7 +4,7 @@
     ${This page is only for vendors to use.}
 </div>
 
-<div ng-if="!data.error" class="panel panel-{{::options.color}} b svdp" role="region" aria-labelledby="task-information-title">
+<div ng-if="!data.error && data.visible" class="panel panel-{{::options.color}} b svdp" role="region" aria-labelledby="task-information-title">
     <div class="panel-heading buvp">
         <h2 id="task-information-title" class="panel-title">
             <fa ng-if="::options.glyph.length" name="{{::options.glyph}}" class="m-r-sm"></fa>
@@ -14,12 +14,82 @@
 
     <div class="panel-body" style="padding-bottom: 0;">
         <div class="details">
-            <div class="col-sm-6 field" ng-repeat="field in data.fields">
+
+            <!-- Request Type -->
+            <div class="col-sm-6 field" ng-if="data.requestTypeField.display_value">
                 <span class="field-value">
-                    <label class="m-n">{{field.label}}</label>
-                    <div>{{field.display_value}}</div>
+                    <label class="m-n">{{data.requestTypeField.label}}</label>
+                    <div>{{data.requestTypeField.display_value}}</div>
                 </span>
             </div>
+
+            <!-- Removal Type (request_type = remove) -->
+            <div class="col-sm-6 field" ng-if="data.removalTypeField.display_value">
+                <span class="field-value">
+                    <label class="m-n">{{data.removalTypeField.label}}</label>
+                    <div>{{data.removalTypeField.display_value}}</div>
+                </span>
+            </div>
+
+            <!-- Alarm Code (request_type = add) -->
+            <div class="col-sm-6 field" ng-if="data.isAdd">
+                <span class="field-value">
+                    <label class="m-n">{{data.alarmCodeLabel}}</label>
+                    <div>
+                        <span ng-if="secretsVisible" class="secret-value">{{data.alarmCode}}</span>
+                        <span ng-if="!secretsVisible">••••••••</span>
+                    </div>
+                </span>
+            </div>
+
+            <!-- Alarm Password (request_type = add) -->
+            <div class="col-sm-6 field" ng-if="data.isAdd">
+                <span class="field-value">
+                    <label class="m-n">{{data.alarmPasswordLabel}}</label>
+                    <div>
+                        <span ng-if="secretsVisible" class="secret-value">{{data.alarmPassword}}</span>
+                        <span ng-if="!secretsVisible">••••••••</span>
+                    </div>
+                </span>
+            </div>
+
+            <!-- Show / Hide control -->
+            <div class="col-sm-12 field" ng-if="data.isAdd">
+                <button ng-if="data.canRevealSecrets && !secretsVisible" class="btn btn-default btn-sm" ng-click="showSecrets()">
+                    <fa name="eye"></fa> ${Show}
+                </button>
+                <button ng-if="data.canRevealSecrets && secretsVisible" class="btn btn-default btn-sm" ng-click="hideSecrets()">
+                    <fa name="eye-slash"></fa> ${Hide}
+                </button>
+                <div ng-if="!data.canRevealSecrets" class="text-muted">
+                    ${These values can no longer be displayed.}
+                </div>
+            </div>
+
+            <!-- Opened For -->
+            <div class="col-sm-6 field" ng-if="data.openedForField.display_value">
+                <span class="field-value">
+                    <label class="m-n">{{data.openedForField.label}}</label>
+                    <div>{{data.openedForField.display_value}}</div>
+                </span>
+            </div>
+
+            <!-- Alarm Access (only checked options) -->
+            <div class="col-sm-12 field" ng-if="data.alarmAccess.length">
+                <span class="field-value">
+                    <label class="m-n">${Alarm Access}</label>
+                    <div ng-repeat="access in data.alarmAccess">{{access}}</div>
+                </span>
+            </div>
+
+            <!-- Phone Number (only if Emergency List checked) -->
+            <div class="col-sm-6 field" ng-if="data.phoneNumber">
+                <span class="field-value">
+                    <label class="m-n">${Phone Number}</label>
+                    <div>{{data.phoneNumber}}</div>
+                </span>
+            </div>
+
         </div>
     </div>
 </div>
@@ -61,8 +131,10 @@ span.field-value {
   min-height: 44px;
   display: block;
 }
-
-
+.secret-value {
+  font-family: monospace;
+  letter-spacing: 1px;
+}
 
 
 
@@ -75,6 +147,9 @@ span.field-value {
 
 (function() {
     data.error = false;
+    data.visible = false;
+
+    // ---- Security: must be a vendor contact ----
     var contact = new GlideRecordSecure("vm_vdr_contact");
     if (!contact.get(gs.getUserID()) || !gs.getUser().hasRole('vendor_contact')) {
         data.error = true;
@@ -94,27 +169,86 @@ span.field-value {
     if (!api.vendorContactHasAccess(record))
         return;
 
+    // ---- Parent record ----
+    var parent = record.parent.getRefRecord();
+    if (!parent || !parent.isValidRecord())
+        return;
+
+    // ---- Gate: only render for alarm panel requests ----
+    if (parent.getValue('issue_type') != 'alarm_panel')
+        return;
+
+    data.visible = true;
     data.title = "${Alarm Panel Details}";
 
-    var fieldsInfo = [];
+    var requestType = parent.getValue('request_type');   // add | remove
+    var state = record.getValue('state');                // current task state
+    var isTerminal = (state == '3' || state == '4');     // 3 = closed complete, 4 = cancelled
 
-    // Pull the parent record off the current record's reference field
-    var parent = record.parent.getRefRecord();
-    if (parent && parent.isValidRecord()) {
-        var field = {};
-        field.name = 'request_type';
-        field.label = parent.request_type.getLabel();
-        field.value = parent.getValue('request_type');          // "add" or "remove"
-        field.display_value = parent.request_type.getDisplayValue(); // "Add" or "Remove"
+    // 1) Request Type
+    data.requestTypeField = buildField(parent, 'request_type');
 
-        if (field.value) {
-            fieldsInfo.push(field);
+    // 2) Add -> encrypted code/password (masked, fetched on demand)
+    //    Remove -> removal type
+    if (requestType == 'add') {
+        data.isAdd = true;
+        data.canRevealSecrets = !isTerminal;
+        data.alarmCodeLabel = parent.alarm_code.getLabel();
+        data.alarmPasswordLabel = parent.alarm_password.getLabel();
+    } else if (requestType == 'remove') {
+        data.removalTypeField = buildField(parent, 'removal_type');
+    }
+
+    // 3) Opened For (display value)
+    data.openedForField = {
+        label: parent.opened_for.getLabel(),
+        display_value: parent.opened_for.getDisplayValue()
+    };
+
+    // 4) Alarm Access - only the checked options
+    var accessOptions = [
+        { name: 'lobby',          label: 'Lobby' },
+        { name: 'value',          label: 'Value / Cash Safe' },
+        { name: 'atm',            label: 'ATM' },
+        { name: 'office',         label: 'Office' },
+        { name: 'emergency_list', label: 'Emergency List' }
+    ];
+
+    data.alarmAccess = [];
+    for (var i = 0; i < accessOptions.length; i++) {
+        if (isChecked(parent, accessOptions[i].name))
+            data.alarmAccess.push(accessOptions[i].label);
+    }
+
+    // 5) Phone Number - only if Emergency List is checked
+    if (isChecked(parent, 'emergency_list')) {
+        var phone = parent.getValue('phone_number');
+        if (phone)
+            data.phoneNumber = phone;
+    }
+
+    // ---- On-demand reveal of encrypted values (re-validated here) ----
+    if (input && input.action == 'revealSecrets') {
+        if (requestType == 'add' && !isTerminal) {
+            data.alarmCode = parent.getDisplayValue('alarm_code');
+            data.alarmPassword = parent.getDisplayValue('alarm_password');
         }
     }
 
-    data.fields = fieldsInfo;
-})();
+    // ---- helpers ----
+    function buildField(gr, name) {
+        return {
+            label: gr[name].getLabel(),
+            value: gr.getValue(name),
+            display_value: gr[name].getDisplayValue()
+        };
+    }
 
+    function isChecked(gr, name) {
+        var v = gr.getValue(name);
+        return v == '1' || v == 'true';
+    }
+})();
 
 
 
@@ -129,4 +263,19 @@ function($scope, spUtil) {
     });
 
     var c = this;
+    $scope.secretsVisible = false;
+
+    $scope.showSecrets = function() {
+        c.data.action = 'revealSecrets';
+        c.server.update().then(function() {
+            c.data.action = undefined;
+            $scope.secretsVisible = true;
+        });
+    };
+
+    $scope.hideSecrets = function() {
+        $scope.secretsVisible = false;
+        c.data.alarmCode = undefined;
+        c.data.alarmPassword = undefined;
+    };
 }
