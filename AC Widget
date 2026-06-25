@@ -214,7 +214,7 @@ span.field-value {
     // 4) Alarm Access - only the checked options
     var accessOptions = [
         { name: 'lobby',          label: 'Lobby' },
-        { name: 'Vault',          label: 'Vault / Cash Safe' },   // <-- capital V as provided; verify in dictionary
+        { name: 'vault',          label: 'Vault / Cash Safe' },
         { name: 'atm',            label: 'ATM' },
         { name: 'office',         label: 'Office' },
         { name: 'emergency_list', label: 'Emergency List' }
