@@ -64,6 +64,9 @@
                 <div ng-if="!data.canRevealSecrets" class="text-muted">
                     ${These values can no longer be displayed.}
                 </div>
+                <div ng-if="secretsVisible && data.secretsEmpty" class="text-warning" style="margin-top:5px;">
+                    ${No value returned — your account may not have decrypt access to these fields.}
+                </div>
             </div>
 
             <!-- Opened For -->
@@ -166,18 +169,15 @@ span.field-value {
         return;
 
     var api = new x_banun_property_0.BUVPVendorPortalUtils();
-    if (!api.vendorContactHasAccess(record))   // access boundary enforced here
+    if (!api.vendorContactHasAccess(record))
         return;
 
-    // ---- Resolve parent, then re-read with a plain GlideRecord ----
-    // getRefRecord() off a secured child returns a secured/masked parent, which
-    // blanks any field the vendor lacks a read ACL on. Re-querying plainly exposes
-    // the display fields; the access boundary above already gates the whole widget.
+    // ---- Resolve parent, re-read plainly so vendor read-ACLs don't blank fields ----
     var parentRef = record.parent.getRefRecord();
     if (!parentRef || !parentRef.isValidRecord())
         return;
 
-    var parent = new GlideRecord(parentRef.getTableName());
+    var parent = new GlideRecord('x_banun_property_0_physical_security_work_order');
     if (!parent.get(parentRef.getUniqueValue()))
         return;
 
@@ -195,8 +195,7 @@ span.field-value {
     // 1) Request Type
     data.requestTypeField = buildField(parent, 'request_type');
 
-    // 2) Add -> encrypted code/password (masked, fetched on demand)
-    //    Remove -> removal type
+    // 2) Add -> encrypted code/password ; Remove -> removal type
     if (requestType == 'add') {
         data.isAdd = true;
         data.canRevealSecrets = !isTerminal;
@@ -206,16 +205,16 @@ span.field-value {
         data.removalTypeField = buildField(parent, 'removal_type');
     }
 
-    // 3) Opened For (display value)
+    // 3) Opened For (display value) -- NOTE the scoped column name
     data.openedForField = {
-        label: parent.opened_for.getLabel(),
-        display_value: parent.opened_for.getDisplayValue()
+        label: parent.x_banun_bunow_al_0_opened_for.getLabel(),
+        display_value: parent.getDisplayValue('x_banun_bunow_al_0_opened_for')
     };
 
     // 4) Alarm Access - only the checked options
     var accessOptions = [
         { name: 'lobby',          label: 'Lobby' },
-        { name: 'value',          label: 'Value / Cash Safe' },
+        { name: 'Vault',          label: 'Vault / Cash Safe' },   // <-- capital V as provided; verify in dictionary
         { name: 'atm',            label: 'ATM' },
         { name: 'office',         label: 'Office' },
         { name: 'emergency_list', label: 'Emergency List' }
@@ -234,14 +233,14 @@ span.field-value {
             data.phoneNumber = phone;
     }
 
-    // ---- On-demand reveal of encrypted values (re-validated here) ----
+    // ---- On-demand reveal of encrypted (CLE string) values ----
     if (input && input.action == 'revealSecrets') {
         if (requestType == 'add' && !isTerminal) {
-            data.alarmCode = parent.getDisplayValue('alarm_code');
-            data.alarmPassword = parent.getDisplayValue('alarm_password');
-            // If these are "Password (2 way)" type, use instead:
-            // data.alarmCode = new GlideEncrypter().decrypt(parent.getValue('alarm_code'));
-            // data.alarmPassword = new GlideEncrypter().decrypt(parent.getValue('alarm_password'));
+            // CLE string fields auto-decrypt via getValue() ONLY if the running
+            // user holds the crypto module's decrypt role. Empty = no access.
+            data.alarmCode = parent.getValue('alarm_code') || '';
+            data.alarmPassword = parent.getValue('alarm_password') || '';
+            data.secretsEmpty = (!data.alarmCode && !data.alarmPassword);
         }
     }
 
@@ -259,7 +258,6 @@ span.field-value {
         return v == '1' || v == 'true';
     }
 })();
-
 
 
 
