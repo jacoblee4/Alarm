@@ -5,33 +5,25 @@
 </div>
 
 <div ng-if="!data.error && data.visible" class="panel panel-{{::options.color}} b svdp" role="region" aria-labelledby="task-information-title">
-    <div class="panel-heading buvp">
-        <h2 id="task-information-title" class="panel-title">
+    <div class="panel-heading buvp" style="display:flex; align-items:center; justify-content:space-between;">
+        <h2 id="task-information-title" class="panel-title" style="margin:0;">
             <fa ng-if="::options.glyph.length" name="{{::options.glyph}}" class="m-r-sm"></fa>
             {{data.title}}
         </h2>
+        <span ng-if="data.isAdd">
+            <button ng-if="data.canRevealSecrets && !secretsVisible" class="btn btn-default btn-sm" ng-click="showSecrets()">
+                <fa name="eye"></fa> ${Show}
+            </button>
+            <button ng-if="data.canRevealSecrets && secretsVisible" class="btn btn-default btn-sm" ng-click="hideSecrets()">
+                <fa name="eye-slash"></fa> ${Hide}
+            </button>
+        </span>
     </div>
 
     <div class="panel-body" style="padding-bottom: 0;">
         <div class="details">
 
-            <!-- Request Type -->
-            <div class="col-sm-6 field" ng-if="data.requestTypeField.display_value">
-                <span class="field-value">
-                    <label class="m-n">{{data.requestTypeField.label}}</label>
-                    <div>{{data.requestTypeField.display_value}}</div>
-                </span>
-            </div>
-
-            <!-- Removal Type (request_type = remove) -->
-            <div class="col-sm-6 field" ng-if="data.removalTypeField.display_value">
-                <span class="field-value">
-                    <label class="m-n">{{data.removalTypeField.label}}</label>
-                    <div>{{data.removalTypeField.display_value}}</div>
-                </span>
-            </div>
-
-            <!-- Alarm Code (request_type = add) -->
+            <!-- LINE 1: Alarm Code (left) + Alarm Password (right) -- add only -->
             <div class="col-sm-6 field" ng-if="data.isAdd">
                 <span class="field-value">
                     <label class="m-n">{{data.alarmCodeLabel}}</label>
@@ -42,7 +34,6 @@
                 </span>
             </div>
 
-            <!-- Alarm Password (request_type = add) -->
             <div class="col-sm-6 field" ng-if="data.isAdd">
                 <span class="field-value">
                     <label class="m-n">{{data.alarmPasswordLabel}}</label>
@@ -53,23 +44,22 @@
                 </span>
             </div>
 
-            <!-- Show / Hide control -->
-            <div class="col-sm-12 field" ng-if="data.isAdd">
-                <button ng-if="data.canRevealSecrets && !secretsVisible" class="btn btn-default btn-sm" ng-click="showSecrets()">
-                    <fa name="eye"></fa> ${Show}
-                </button>
-                <button ng-if="data.canRevealSecrets && secretsVisible" class="btn btn-default btn-sm" ng-click="hideSecrets()">
-                    <fa name="eye-slash"></fa> ${Hide}
-                </button>
-                <div ng-if="!data.canRevealSecrets" class="text-muted">
-                    ${These values can no longer be displayed.}
-                </div>
-                <div ng-if="secretsVisible && data.secretsEmpty" class="text-warning" style="margin-top:5px;">
-                    ${No value returned — your account may not have decrypt access to these fields.}
-                </div>
+            <!-- Secret-state messages (add only) -->
+            <div class="col-sm-12 field" ng-if="data.isAdd && !data.canRevealSecrets">
+                <div class="text-muted">${These values can no longer be displayed.}</div>
+            </div>
+            <div class="col-sm-12 field" ng-if="data.isAdd && secretsVisible && data.secretsEmpty">
+                <div class="text-warning">${No value returned — your account may not have decrypt access to these fields.}</div>
             </div>
 
-            <!-- Opened For -->
+            <!-- LINE 2: Request Type (left) + Opened For (right) -->
+            <div class="col-sm-6 field" ng-if="data.requestTypeField.display_value">
+                <span class="field-value">
+                    <label class="m-n">{{data.requestTypeField.label}}</label>
+                    <div>{{data.requestTypeField.display_value}}</div>
+                </span>
+            </div>
+
             <div class="col-sm-6 field" ng-if="data.openedForField.display_value">
                 <span class="field-value">
                     <label class="m-n">{{data.openedForField.label}}</label>
@@ -77,12 +67,25 @@
                 </span>
             </div>
 
-            <!-- Alarm Access (only checked options) -->
+            <!-- LINE 3: Removal Type (left) -- remove only -->
+            <div class="col-sm-6 field" ng-if="data.removalTypeField.display_value">
+                <span class="field-value">
+                    <label class="m-n">{{data.removalTypeField.label}}</label>
+                    <div>{{data.removalTypeField.display_value}}</div>
+                </span>
+            </div>
+
+            <!-- LINE 4: Alarm Access (only checked options) -->
             <div class="col-sm-12 field" ng-if="data.alarmAccess.length">
                 <span class="field-value">
                     <label class="m-n">${Alarm Access}</label>
                     <div ng-repeat="access in data.alarmAccess">{{access}}</div>
                 </span>
+            </div>
+
+            <!-- TEMPORARY DEBUG: shows raw checkbox values. Remove once confirmed. -->
+            <div class="col-sm-12 field" ng-if="data.accessDebug">
+                <small class="text-muted">DEBUG checkboxes: {{data.accessDebug}}</small>
             </div>
 
             <!-- Phone Number (only if Emergency List checked) -->
@@ -205,13 +208,13 @@ span.field-value {
         data.removalTypeField = buildField(parent, 'removal_type');
     }
 
-    // 3) Opened For (display value) -- NOTE the scoped column name
+    // 3) Opened For (display value)
     data.openedForField = {
         label: parent.x_banun_bunow_al_0_opened_for.getLabel(),
         display_value: parent.getDisplayValue('x_banun_bunow_al_0_opened_for')
     };
 
-    // 4) Alarm Access - only the checked options
+    // 4) Alarm Access - only the checked options (+ debug capture)
     var accessOptions = [
         { name: 'lobby',          label: 'Lobby' },
         { name: 'vault',          label: 'Vault / Cash Safe' },
@@ -221,13 +224,20 @@ span.field-value {
     ];
 
     data.alarmAccess = [];
+    var debugParts = [];
     for (var i = 0; i < accessOptions.length; i++) {
-        if (isChecked(parent, accessOptions[i].name))
+        var raw = parent.getValue(accessOptions[i].name);
+        // raw == null  -> column name is wrong (field doesn't exist)
+        // raw == '0'   -> exists but unchecked on this record
+        // raw == '1'   -> checked
+        debugParts.push(accessOptions[i].name + '=' + (raw === null ? 'NULL' : raw));
+        if (isChecked(raw))
             data.alarmAccess.push(accessOptions[i].label);
     }
+    data.accessDebug = debugParts.join(' | ');
 
     // 5) Phone Number - only if Emergency List is checked
-    if (isChecked(parent, 'emergency_list')) {
+    if (isChecked(parent.getValue('emergency_list'))) {
         var phone = parent.getValue('phone_number');
         if (phone)
             data.phoneNumber = phone;
@@ -236,8 +246,6 @@ span.field-value {
     // ---- On-demand reveal of encrypted (CLE string) values ----
     if (input && input.action == 'revealSecrets') {
         if (requestType == 'add' && !isTerminal) {
-            // CLE string fields auto-decrypt via getValue() ONLY if the running
-            // user holds the crypto module's decrypt role. Empty = no access.
             data.alarmCode = parent.getValue('alarm_code') || '';
             data.alarmPassword = parent.getValue('alarm_password') || '';
             data.secretsEmpty = (!data.alarmCode && !data.alarmPassword);
@@ -253,12 +261,10 @@ span.field-value {
         };
     }
 
-    function isChecked(gr, name) {
-        var v = gr.getValue(name);
+    function isChecked(v) {
         return v == '1' || v == 'true';
     }
 })();
-
 
 
 
