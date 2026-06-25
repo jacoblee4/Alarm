@@ -139,7 +139,11 @@ span.field-value {
 
         if (field.name == 'u_address') {
             field.label = "Address";
-            field.value = api.getBranchAddress(sys_id);
+            try {
+                field.value = api.getBranchAddress(sys_id);
+            } catch (e) {
+                field.value = '';
+            }
             field.display_value = field.value;
         }
 
