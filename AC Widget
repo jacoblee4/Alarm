@@ -166,12 +166,19 @@ span.field-value {
         return;
 
     var api = new x_banun_property_0.BUVPVendorPortalUtils();
-    if (!api.vendorContactHasAccess(record))
+    if (!api.vendorContactHasAccess(record))   // access boundary enforced here
         return;
 
-    // ---- Parent record ----
-    var parent = record.parent.getRefRecord();
-    if (!parent || !parent.isValidRecord())
+    // ---- Resolve parent, then re-read with a plain GlideRecord ----
+    // getRefRecord() off a secured child returns a secured/masked parent, which
+    // blanks any field the vendor lacks a read ACL on. Re-querying plainly exposes
+    // the display fields; the access boundary above already gates the whole widget.
+    var parentRef = record.parent.getRefRecord();
+    if (!parentRef || !parentRef.isValidRecord())
+        return;
+
+    var parent = new GlideRecord(parentRef.getTableName());
+    if (!parent.get(parentRef.getUniqueValue()))
         return;
 
     // ---- Gate: only render for alarm panel requests ----
@@ -232,6 +239,9 @@ span.field-value {
         if (requestType == 'add' && !isTerminal) {
             data.alarmCode = parent.getDisplayValue('alarm_code');
             data.alarmPassword = parent.getDisplayValue('alarm_password');
+            // If these are "Password (2 way)" type, use instead:
+            // data.alarmCode = new GlideEncrypter().decrypt(parent.getValue('alarm_code'));
+            // data.alarmPassword = new GlideEncrypter().decrypt(parent.getValue('alarm_password'));
         }
     }
 
