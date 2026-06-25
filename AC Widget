@@ -67,8 +67,8 @@
                 </span>
             </div>
 
-            <!-- LINE 3: Removal Type (left) -- remove only -->
-            <div class="col-sm-6 field" ng-if="data.removalTypeField.display_value">
+            <!-- LINE 3: Removal Type (full width) -- remove only -->
+            <div class="col-sm-12 field" ng-if="data.removalTypeField.display_value">
                 <span class="field-value">
                     <label class="m-n">{{data.removalTypeField.label}}</label>
                     <div>{{data.removalTypeField.display_value}}</div>
@@ -83,13 +83,8 @@
                 </span>
             </div>
 
-            <!-- TEMPORARY DEBUG: shows raw checkbox values. Remove once confirmed. -->
-            <div class="col-sm-12 field" ng-if="data.accessDebug">
-                <small class="text-muted">DEBUG checkboxes: {{data.accessDebug}}</small>
-            </div>
-
-            <!-- Phone Number (only if Emergency List checked) -->
-            <div class="col-sm-6 field" ng-if="data.phoneNumber">
+            <!-- Phone Number (full width, only if Emergency List checked) -->
+            <div class="col-sm-12 field" ng-if="data.phoneNumber">
                 <span class="field-value">
                     <label class="m-n">${Phone Number}</label>
                     <div>{{data.phoneNumber}}</div>
@@ -214,7 +209,7 @@ span.field-value {
         display_value: parent.getDisplayValue('x_banun_bunow_al_0_opened_for')
     };
 
-    // 4) Alarm Access - only the checked options (+ debug capture)
+    // 4) Alarm Access - only the checked options
     var accessOptions = [
         { name: 'lobby',          label: 'Lobby' },
         { name: 'vault',          label: 'Vault / Cash Safe' },
@@ -224,17 +219,10 @@ span.field-value {
     ];
 
     data.alarmAccess = [];
-    var debugParts = [];
     for (var i = 0; i < accessOptions.length; i++) {
-        var raw = parent.getValue(accessOptions[i].name);
-        // raw == null  -> column name is wrong (field doesn't exist)
-        // raw == '0'   -> exists but unchecked on this record
-        // raw == '1'   -> checked
-        debugParts.push(accessOptions[i].name + '=' + (raw === null ? 'NULL' : raw));
-        if (isChecked(raw))
+        if (isChecked(parent.getValue(accessOptions[i].name)))
             data.alarmAccess.push(accessOptions[i].label);
     }
-    data.accessDebug = debugParts.join(' | ');
 
     // 5) Phone Number - only if Emergency List is checked
     if (isChecked(parent.getValue('emergency_list'))) {
