@@ -160,8 +160,6 @@ span.field-value {
     var table = $sp.getParameter("table");
     var sys_id = $sp.getParameter("sys_id");
 
-    data.title = "${Record Information}";
-
     var record = new GlideRecordSecure(table);
     if (!record.get(sys_id))
         return;
@@ -186,8 +184,8 @@ span.field-value {
     data.visible = true;
     data.title = "${Alarm Panel Details}";
 
-    var requestType = parent.getValue('request_type');   // add | remove
-    var state = record.getValue('state');                // current task state
+    var requestType = parent.getValue('request_type');
+    var state = record.getValue('state');               
     var isTerminal = (state == '3' || state == '4');     // 3 = closed complete, 4 = cancelled
 
     // 1) Request Type
@@ -259,7 +257,7 @@ span.field-value {
 
 
 // Client script
-function($scope, spUtil) {
+api.controller=function($scope, spUtil) {
     $scope.$on('record.updated', function(name, data) {
         spUtil.update($scope);
     });
