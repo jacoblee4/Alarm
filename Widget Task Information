@@ -14,7 +14,7 @@
 
     <div class="panel-body" style="padding-bottom: 0;">
         <div class="details">
-            <div class="col-lgsm-12 field" style="padding-bottom: 5;">
+            <div ng-if="!data.isAlarmPanel" class="col-lgsm-12 field" style="padding-bottom: 5;">
                 <label class="m-n">{{data.dateName}}</label>
                 <sp-date-picker field="c.data.dateValue" ng-model="c.data.dateValue" sn-change="" sn-include-time="true"></sp-date-picker>
 
@@ -110,6 +110,9 @@ span.field-value {
     if (!api.vendorContactHasAccess(gr))
         return;
 
+    // Hide schedule date + requester when parent issue_type is alarm_panel
+    data.isAlarmPanel = (gr.parent.issue_type == 'alarm_panel');
+
     var fields;
     data.title = "${Task Details}";
     fields = 'state,service_date,requester,vendor,impacted_cost_center,branch,u_address,region,site,campus,building,floor';
@@ -120,6 +123,10 @@ span.field-value {
     for (var i = 0; i < fields.length; i++) {
         var field = {};
         field.name = fields[i];
+
+        // Skip requester when alarm panel
+        if (field.name == 'requester' && data.isAlarmPanel)
+            continue;
 
         if (field.name != 'u_address') {
             field.label = gr[fields[i]].getLabel();
