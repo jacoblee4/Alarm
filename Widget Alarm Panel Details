@@ -5,11 +5,22 @@
 </div>
 
 <div ng-if="!data.error && data.visible" class="panel panel-{{::options.color}} b svdp" role="region" aria-labelledby="task-information-title">
-    <div class="panel-heading buvp" style="display:flex; align-items:center; justify-content:space-between;">
+    <div class="panel-heading buvp">
         <h2 id="task-information-title" class="panel-title" style="margin:0;">
             <fa ng-if="::options.glyph.length" name="{{::options.glyph}}" class="m-r-sm"></fa>
             {{data.title}}
         </h2>
+    </div>
+
+    <!-- Request Type row: colored Add/Remove (left) + Show/Hide (right, add only) -->
+    <div class="request-type-row" ng-if="data.requestTypeField.display_value">
+        <div class="request-type-block">
+            <label class="m-n">{{data.requestTypeField.label}}</label>
+            <div class="request-type-value"
+                 ng-class="{'rt-add': data.requestTypeField.value == 'add', 'rt-remove': data.requestTypeField.value == 'remove'}">
+                {{data.requestTypeField.display_value}}
+            </div>
+        </div>
         <span ng-if="data.isAdd">
             <button ng-if="data.canRevealSecrets && !secretsVisible" class="btn btn-default btn-sm" ng-click="showSecrets()">
                 <fa name="eye"></fa> ${Show}
@@ -52,15 +63,8 @@
                 <div class="text-warning">${No value returned — your account may not have decrypt access to these fields.}</div>
             </div>
 
-            <!-- LINE 2: Request Type (left) + Opened For (right) -->
-            <div class="col-sm-6 field" ng-if="data.requestTypeField.display_value">
-                <span class="field-value">
-                    <label class="m-n">{{data.requestTypeField.label}}</label>
-                    <div>{{data.requestTypeField.display_value}}</div>
-                </span>
-            </div>
-
-            <div class="col-sm-6 field" ng-if="data.openedForField.display_value">
+            <!-- LINE 2: Opened For (full width) -->
+            <div class="col-sm-12 field" ng-if="data.openedForField.display_value">
                 <span class="field-value">
                     <label class="m-n">{{data.openedForField.label}}</label>
                     <div>{{data.openedForField.display_value}}</div>
@@ -105,36 +109,32 @@
 
 // CSS
 
-label {
-  font-weight: bold; 
+.request-type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 20px;
+  border-bottom: 1px solid #ddd;
 }
 
-div.details {
-  color: $dark-text-color;
-}
-
-.panel-heading {
-  padding: 15px 20px 10px;
-}
-
-div.details label{
+.request-type-block label {
+  display: block;
+  margin: 0;
   color: #555;
   font-weight: 600;
 }
 
-div.field {
-  padding: 0 !important;
-  padding-right: 1px!important;
-  margin-bottom: 5px;
+.request-type-value {
+  font-size: 18px;
+  font-weight: 600;
 }
 
-span.field-value {
-  min-height: 44px;
-  display: block;
+.request-type-value.rt-add {
+  color: #3b6d11;
 }
-.secret-value {
-  font-family: monospace;
-  letter-spacing: 1px;
+
+.request-type-value.rt-remove {
+  color: #a32d2d;
 }
 
 
