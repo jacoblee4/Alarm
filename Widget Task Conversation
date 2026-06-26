@@ -1,5 +1,6 @@
 //HTML
 
+<!-- Vendor-only guard -->
 <div ng-if="data.error" class="alert alert-info" tabindex="0">
   ${This page is only for vendors to use.}
 </div>
@@ -9,6 +10,7 @@
   </div>
 
   <div ng-if="data.canRead" class="panel panel-{{options.color}} b ticket_conversation">
+    <!-- Header: task number + short description -->
     <div class="panel-heading buvp wide" role="region" aria-label="${Panel heading}">
       <div class="titles">
         <div class="task-number">
@@ -18,27 +20,9 @@
           {{data.short_description}}
         </h2>
       </div>
-      <!--            
-      <div class="corner-buttons">
-        <div ng-show="data.lockedStates.indexOf(data.stateVal) < 0 && data.userID==data.assigneeID">
-          <button ng-show="data.stateVal=='1' && data.table=='x_banun_property_0_vendor_task'" ng-click="setProgress('2')" class="btn btn-default">${Start Progress}</button>
-          <button ng-show="data.table=='x_banun_property_0_vendor_task'" ng-click="markComplete()" class="btn btn-primary">${Complete Task}</button>
-        </div>
-        <div class="message">
-          <span ng-show="data.closeStates.indexOf(data.stateVal) > -1" class="closed" style="font-size:15px;">
-            <i class="fa fa-check-circle-o"></i>&nbsp;&nbsp;${Closed Complete}</span>
-        </div>
-      </div>
--->
     </div>
 
     <div class="panel-body buvp" style="margin-top: -10px;" role="region" aria-label="${Panel body}">
-      <!--
-      <grc-tabset id="task-conversation-tabset" aria-label="${Task conversation tabset}" hide-tabs="data.table!=='x_banun_property_0_vendor_task'">
-        <grc-tabpanel id="issue-details-panel" heading="${Issue Details}" select-callback="setTab('comments')">
-
-      -->
-      <!-- comments tab -->
       <div>
         <h2 class="description-title" style="margin-bottom: 10px;">
           ${Description}
@@ -47,19 +31,22 @@
           <div ng-if="!data.description" class="task-description-empty">${(empty)}</div>
           <span ng-if="data.description">{{data.description}}</span>
 
-          <div <label class="attachConfirm-label" for="attachConfirm">{{data.attach_label}}</label></div>
-          <div class="attachConfirm-div">
-            <sn-choice-list
-                            class="attachConfirm-choice"
-                            id="attachConfirm"
-                            sn-model="c.attached"
-                            sn-options="c.attachOptions"
-                            sn-value-field="value"
-                            sn-text-field="label"
-                            sn-items="c.attachChoices"
-                            sn-on-change="c.updateAttached(selectedValue)"
-                            >
-            </sn-choice-list>
+          <!-- Invoice/Work Order Attached choice - hidden when parent issue_type is alarm_panel -->
+          <div ng-if="!data.hideAttach">
+            <label class="attachConfirm-label" for="attachConfirm">{{data.attach_label}}</label>
+            <div class="attachConfirm-div">
+              <sn-choice-list
+                              class="attachConfirm-choice"
+                              id="attachConfirm"
+                              sn-model="c.attached"
+                              sn-options="c.attachOptions"
+                              sn-value-field="value"
+                              sn-text-field="label"
+                              sn-items="c.attachChoices"
+                              sn-on-change="c.updateAttached(selectedValue)"
+                              >
+              </sn-choice-list>
+            </div>
           </div>
         </div>
 
@@ -67,6 +54,7 @@
           ${Comments}
         </h3>
 
+        <!-- Comment entry + activity stream (only if a readable journal field exists) -->
         <div ng-if="data.hasReadableJournalField">
           <form ng-submit="postEntry(data.journalEntry)" id="sand">
             <div ng-show="data.primaryJournalField" class="input-group" role="group">
@@ -87,6 +75,7 @@
                 <input type="submit" class="btn btn-primary" value="{{data.btnLabel}}" ng-disabled="!data.journalEntry || data.isPosting" />
               </span>
             </div>
+            <!-- Optional secondary journal field toggle (e.g. work notes) -->
             <div ng-if="data.secondaryJournalField && data.secondaryJournalField.can_write">
               <label class="pull-right">
                 <input type="checkbox" ng-model="data.useSecondaryJournalField" />
@@ -94,6 +83,7 @@
               </label>
             </div>
           </form>
+          <!-- "User is typing" indicators -->
           <ul class="list-group m-b-none" ng-if="typing.length">
             <li class="list-group-item user-typing m-t" ng-repeat="u in typing">${{{::u.user_display_name}} is typing}</li>
           </ul>
@@ -101,6 +91,7 @@
             <li class="list-group-item user-typing">{{msg}}</li>
           </ul>
 
+          <!-- Activity timeline -->
           <div class="timeline-container">
             <ul class="timeline">
               <li class="timeline-item" ng-class="{'timeline-inverted': e.user_sys_id == data.stream.user_sys_id} " ng-repeat="e in data.mergedEntries">
@@ -119,6 +110,7 @@
                       </p>
                     </div>
                     <div class="timeline-body" tabindex="-1" aria-hidden="true">
+                      <!-- Text entry vs. attachment entry -->
                       <p ng-if="e.element != 'attachment'" ng-bind-html="::e.value"></p>
                       <div ng-if="e.element == 'attachment'">
                         <a ng-if="e.attachment.thumbnail_path" target="_blank" href="/sys_attachment.do?view=true&sys_id={{e.attachment.sys_id}}" title="{{dataViewMsg}}">
@@ -137,6 +129,7 @@
                 </div>
               </li>
 
+              <!-- Record-created anchor entry -->
               <li class="timeline-item timeline-inverted">
                 <div class="timeline-badge" tabindex="-1" aria-hidden="true">
                   <sn-avatar primary="data.stream.user_sys_id" class="avatar-large" show-presence="false" enable-context-menu="false"></sn-avatar>
@@ -164,11 +157,6 @@
         </div>
         <div ng-if="!data.hasReadableJournalField">{{options.no_readable_journal_field_message}}</div>
       </div>
-      <!-- comments tab -->
-      <!--
-        </grc-tabpanel>
-      </grc-tabset>
--->
     </div>
   </div>
 </div>
@@ -471,12 +459,15 @@ div.sub-avatar span {
 
 (function() {
 
+	// Vendor-only guard: must be an active vendor contact
 	data.error = false;
 	var gr = new GlideRecordSecure("vm_vdr_contact");
 	if (!gr.get(gs.getUserID()) || !gs.getUser().hasRole('vendor_contact')) {
 		data.error = true;
 		return;
 	}
+
+	// Page params + base record info
 	var table = $sp.getParameter("table");
 	var sys_id = $sp.getParameter("sys_id");
 	data.recordType = 'tasks';
@@ -487,7 +478,8 @@ div.sub-avatar span {
 
 	data.lockedStates = ['3']; //Closed Complete
 	data.closeStates = ['3']; //Closed Complete
-	
+
+	// Current user info
 	var utils = new x_banun_property_0.BUVPVendorPortalUtils();
 	data.user = utils.getUserInfo();
 	data.userType = data.user.userType;
@@ -498,6 +490,7 @@ div.sub-avatar span {
 	data.vendor = '${Tasks}';
 	data.url = '?id=buvp_task_list&t=t';
 
+	// Secure read + access check on the target record
 	gr = new GlideRecordSecure(table);
 	if (!gr.get(sys_id))
 		return;
@@ -511,19 +504,22 @@ div.sub-avatar span {
 	data.title = data.short_description ? data.short_description : data.number;
 	data.stateVal = gr.state + '';
 	data.assigneeID = gr.vendor + '';
-	
+
+	// UI message strings
 	data.uploadingAttachmentMsg = gs.getMessage("Uploading attachment...");
 	data.sharingLocMsg = gs.getMessage("Sharing location...");
 	data.checkInLocMsg = gs.getMessage("Check in location");
 	data.viewMsg = gs.getMessage("View");
 	data.messagePostedMsg = gs.getMessage("Message has been posted");
 
+	// Comment input options
 	data.placeholder = options.placeholder || gs.getMessage("Type your message here...");
 	data.placeholderNoEntries = options.placeholderNoEntries || gs.getMessage("Type your message here...");
 	data.btnLabel = options.btnLabel || gs.getMessage("Send");
 	data.includeExtended = options.includeExtended || false;
 	data.use_dynamic_placeholder = options.use_dynamic_placeholder;
 
+	// Re-fetch with standard GlideRecord for stream/journal handling
 	gr = new GlideRecord(data.table);
 	if (!gr.isValid())
 		return;
@@ -537,6 +533,7 @@ div.sub-avatar span {
 	data.created_on = gr.getValue('sys_created_on');
 
 	if (input) { // if we have input then we're saving
+		// Post a journal entry (comment / work note)
 		if (input.journalEntry && input.journalEntryField) {
 			if (gr.canWrite(input.journalEntryField)) {
 				gr[input.journalEntryField] = input.journalEntry;
@@ -544,29 +541,13 @@ div.sub-avatar span {
 				$sp.logStat('Comments', data.table, data.sys_id, input.journalEntry);
 			}
 		}
-		
+
+		// Save Invoice/Work Order Attached choice
 		if (input.action == 'updateAttached') {
 			gr.attachment_confirmation = input.value;
 			gr.update();
 			data.msg = 'OK';
 		}
-		
-		//Mark as resolved/complete
-		//                 if (input.action == 'markComplete') {
-		//                     var taskGR = new GlideRecord(data.table);
-		//                     taskGR.get(data.sys_id);
-		//                     utils.markTaskComplete(data.sys_id);
-		//                     data.msg = 'OK';
-		//                 }
-
-		//                 //Set 
-		//                 if (input.action == 'setState') {
-		//                     gr = new GlideRecord(data.table);
-		//                     gr.get(data.sys_id);
-		//                     gr.setValue('state', input.state);
-		//                     gr.update();
-		//                     data.msg = 'OK';
-		//                 }
 
 		data.placeholder = input.placeholder;
 		data.includeExtended = input.includeExtended;
@@ -574,6 +555,7 @@ div.sub-avatar span {
 		$sp.logStat('Task View', data.table, data.sys_id);
 	}
 
+	// Build activity stream + resolve readable/writable journal fields
 	data.canRead = gr.canRead();
 	data.isNewRecord = data.sys_id == -1 || gr.isNewRecord();
 	data.hasWritableJournalField = false;
@@ -581,6 +563,7 @@ div.sub-avatar span {
 	if (data.canRead && !data.isNewRecord) {
 		data.stream = $sp.getStream(data.table, data.sys_id);
 
+		// Build aria labels for each stream entry
 		var entries = data.stream.entries;
 		for (var i = 0; i < entries.length; i++)
 			entries[i].ariaLabel = gs.getMessage('Message posted by {0} at {1}. The message is: {2}', [entries[i].name, entries[i].sys_created_on, entries[i].value]);
@@ -607,10 +590,12 @@ div.sub-avatar span {
 
 	data.tableLabel = gr.getLabel();
 
+	// Related vendor tasks (only on the vendor task table)
 	if (data.table == 'x_banun_property_0_vendor_task') {
 		data.tasks = utils.getVendorTasks(sys_id); //taskID, vendorID
 	}
 
+	// Breadcrumbs
 	data.breadcrumbs = [{
 		label: data.vendor,
 		url: data.url
@@ -622,20 +607,23 @@ div.sub-avatar span {
 	});
 
 	data.firstMessageAriaLabel = gs.getMessage('Message posted by {0} at {1}. The message is: {2} created', [data.stream.user_full_name, data.created_on, data.number]);
-	
+
+	// Invoice/Work Order Attached field - label + current value
 	data.attach_label = gr.attachment_confirmation.getLabel();
 	data.attached = gr.attachment_confirmation.toString();
 
-	//data.attachChoices = [{"value":"no","label":"No"},{"value":"yes","label":"Yes "}];
-	
+	// Hide attachment confirmation when parent issue_type is alarm_panel
+	data.hideAttach = (gr.parent.issue_type == 'alarm_panel');
+
+	// Build choice options for the attachment confirmation field
 	var chocies = new GlideChoiceList();
 	var attachList = chocies.getChoiceList("x_banun_property_0_vendor_task", "attachment_confirmation");
 	var attachOptions = [];
 	for (var i = 0; i < attachList.getSize(); i++) {
-			attachOptions.push({'value' : attachList.getChoice(i).getValue(), 'label' : attachList.getChoice(i).getLabel()});
+		attachOptions.push({'value' : attachList.getChoice(i).getValue(), 'label' : attachList.getChoice(i).getLabel()});
 	}
 	data.attachChoices = attachOptions;
-	
+
 })();
 
 
