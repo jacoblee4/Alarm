@@ -46,6 +46,7 @@
 
 
 
+
 // CSS
 
 label {
@@ -79,7 +80,6 @@ span.field-value {
 .btn-primary{
   margin-top: 5px;
 }
-
 
 
 
@@ -179,7 +179,7 @@ span.field-value {
 
 
 // Client script
-function($scope, spUtil) {
+api.controller=function($scope, spUtil) {
     $scope.$on('record.updated', function(name, data) {
         spUtil.update($scope);
     });
