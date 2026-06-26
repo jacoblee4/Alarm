@@ -639,39 +639,6 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 
 	var c = this;
 
-	// $scope.tab = $scope.data.tab || 'comments';
-
-	$scope.setProgress = function(state) {
-		$scope.postEntry($scope.data.journalEntry);
-		$scope.server.get({
-			action: "setState",
-			state: state
-		})
-			.then(function(response) {
-			$scope.data = response.data;
-			if (response.data.msg == 'OK') {
-				if (state == '2')
-					spUtil.addInfoMessage("${State moved to Work in Progress.}");
-				if (state == '3')
-					spUtil.addInfoMessage("${State moved to Closed Complete.}");
-			}
-		});
-	};
-
-	$scope.markComplete = function() {
-
-		$scope.postEntry($scope.data.journalEntry);
-		$scope.server.get({
-			action: "markComplete"
-		})
-			.then(function(response) {
-			$scope.data = response.data;
-			if (response.data.msg == 'OK') {
-				spUtil.addInfoMessage("${Task has been completed.}");
-			}
-		});
-	};
-
 	$scope.showConversation = function(table, sysID, assessmentID) {
 		$location.search('id=buvp_task_conversation&table=' + table + '&v=sp&sys_id=' + sysID);
 	};
@@ -688,6 +655,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 	if ($scope.page && $scope.page.g_form)
 		hideParentJournalFields();
 
+	// Hide parent journal fields from the native form (avoids duplicate inputs)
 	function hideParentJournalFields() {
 		if (!$scope.data.stream)
 			return;
@@ -698,6 +666,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 			g_form.setDisplay(fields[f].name, false);
 	}
 
+	// Attachment upload handler (24MB limit)
 	function setupAttachmentHandler() {
 		$scope.attachmentHandler = new nowAttachmentHandler(attachSuccess, appendError);
 
@@ -738,6 +707,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 		$scope.data.showLocationIcon = true;
 	});
 
+	// Track which users are currently typing
 	$scope.$on('sp.sessions', function(evt, sessions) {
 		$scope.typing = [];
 		Object.keys(sessions).forEach(function(session) {
@@ -761,6 +731,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 		}, 50);
 	});
 
+	// Merge new stream entries into the existing list without duplicating
 	function mergeStreamEntries() {
 		$scope.placeholder = $scope.data.placeholderNoEntries;
 		if (!$scope.data.stream || !$scope.data.stream.entries)
@@ -794,6 +765,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 		return $scope.placeholder;
 	};
 
+	// Per-field border color for timeline entries (cached after first build)
 	var colorCache;
 	$scope.getFieldColor = function(fieldName) {
 		var defaultColor = "transparent";
@@ -837,12 +809,13 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 
 	$scope.$on("attachment.upload.stop", function() {
 		$scope.msg = "";
-		//update the stream so we get the new attachment
+		// Update the stream so we get the new attachment
 		spUtil.update($scope).then(function(r) {
 			$scope.data.stream = r.stream;
 		});
 	});
 
+	// Post a comment / work note
 	$scope.data.isPosting = false;
 	$scope.postEntry = function(input) {
 
@@ -873,6 +846,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 		$scope.data.journalEntryField = "";
 	};
 
+	// Enter posts, Shift+Enter adds a new line
 	$scope.keyPress = function(event) {
 		if (event.keyCode === 13 && !event.shiftKey) {
 			event.target.rows = 1;
@@ -896,6 +870,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 		return '';
 	};
 
+	// Emit typing/viewing status for presence
 	$scope.userTyping = function(input) {
 		var status = "viewing";
 		if (input.length)
@@ -911,6 +886,7 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 
 	$rootScope.$broadcast('sp.update.breadcrumbs', $scope.data.breadcrumbs);
 
+	// Invoice/Work Order Attached choice field setup
 	c.attachChoices = c.data.attachChoices;
 
 	c.attached = c.data.attached;
@@ -919,7 +895,8 @@ function spTicketConversation($scope, nowAttachmentHandler, $animate, $rootScope
 		hideSearch: true,
 		placeholder: "Error loading data"
 	};
-	
+
+	// Save the attachment confirmation selection
 	c.updateAttached = function(selectedValue) {
 		$scope.server.get({
 			action: "updateAttached",
