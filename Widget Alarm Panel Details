@@ -5,22 +5,11 @@
 </div>
 
 <div ng-if="!data.error && data.visible" class="panel panel-{{::options.color}} b svdp" role="region" aria-labelledby="task-information-title">
-    <div class="panel-heading buvp">
-        <h2 id="task-information-title" class="panel-title">
+    <div class="panel-heading buvp" style="display:flex; align-items:center; justify-content:space-between;">
+        <h2 id="task-information-title" class="panel-title" style="margin:0;">
             <fa ng-if="::options.glyph.length" name="{{::options.glyph}}" class="m-r-sm"></fa>
             {{data.title}}
         </h2>
-    </div>
-
-    <!-- Request Type row: colored Add/Remove (left) + Show/Hide (right, add only) -->
-    <div class="request-type-row" ng-if="data.requestTypeField.display_value">
-        <div class="request-type-block">
-            <label class="m-n">{{data.requestTypeField.label}}</label>
-            <div class="request-type-value"
-                 ng-class="{'rt-add': data.requestTypeField.value == 'add', 'rt-remove': data.requestTypeField.value == 'remove'}">
-                {{data.requestTypeField.display_value}}
-            </div>
-        </div>
         <span ng-if="data.isAdd">
             <button ng-if="data.canRevealSecrets && !secretsVisible" class="btn btn-default btn-sm" ng-click="showSecrets()">
                 <fa name="eye"></fa> ${Show}
@@ -29,6 +18,21 @@
                 <fa name="eye-slash"></fa> ${Hide}
             </button>
         </span>
+    </div>
+
+    <!-- Request Type (left) + Opened For (right) -->
+    <div class="request-type-row" ng-if="data.requestTypeField.display_value">
+        <div class="request-type-block">
+            <label class="m-n">{{data.requestTypeField.label}}</label>
+            <div class="request-type-value"
+                 ng-class="{'rt-add': data.requestTypeField.value == 'add', 'rt-remove': data.requestTypeField.value == 'remove'}">
+                {{data.requestTypeField.display_value}}
+            </div>
+        </div>
+        <div class="opened-for-block" ng-if="data.openedForField.display_value">
+            <label class="m-n">{{data.openedForField.label}}</label>
+            <div class="opened-for-value">{{data.openedForField.display_value}}</div>
+        </div>
     </div>
 
     <div class="panel-body" style="padding-bottom: 15px;">
@@ -63,15 +67,7 @@
                 <div class="text-warning">${No value returned — your account may not have decrypt access to these fields.}</div>
             </div>
 
-            <!-- LINE 2: Opened For (full width) -->
-            <div class="col-sm-12 field" ng-if="data.openedForField.display_value">
-                <span class="field-value">
-                    <label class="m-n">{{data.openedForField.label}}</label>
-                    <div>{{data.openedForField.display_value}}</div>
-                </span>
-            </div>
-
-            <!-- LINE 3: Removal Type (full width) -- remove only -->
+            <!-- LINE 2: Removal Type (full width) -- remove only -->
             <div class="col-sm-12 field" ng-if="data.removalTypeField.display_value">
                 <span class="field-value">
                     <label class="m-n">{{data.removalTypeField.label}}</label>
@@ -79,7 +75,7 @@
                 </span>
             </div>
 
-            <!-- LINE 4: Alarm Access (only checked options) -->
+            <!-- LINE 3: Alarm Access (only checked options) -->
             <div class="col-sm-12 field" ng-if="data.alarmAccess.length">
                 <span class="field-value">
                     <label class="m-n">${Alarm Access}</label>
@@ -109,15 +105,48 @@
 
 // CSS
 
-.request-type-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
+label {
+  font-weight: bold;
+}
+
+div.details {
+  color: $dark-text-color;
+}
+
+.panel-heading {
+  padding: 15px 20px 10px;
+}
+
+div.details label{
+  color: #555;
+  font-weight: 600;
+}
+
+div.field {
+  padding: 0 !important;
+  padding-right: 1px!important;
   margin-bottom: 5px;
 }
 
-.request-type-block label {
+span.field-value {
+  min-height: 44px;
+  display: block;
+}
+
+.secret-value {
+  font-family: monospace;
+  letter-spacing: 1px;
+}
+
+/* Request Type / Opened For row */
+.request-type-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 20px 0;
+}
+
+.request-type-row label {
   margin: 0;
   color: #555;
   font-weight: 600;
@@ -136,6 +165,15 @@
   color: #a32d2d;
 }
 
+.opened-for-block {
+  text-align: right;
+}
+
+.opened-for-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+}
 
 
 
