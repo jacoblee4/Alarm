@@ -6,7 +6,7 @@
 
 <div ng-if="!data.error && data.visible" class="panel panel-{{::options.color}} b svdp" role="region" aria-labelledby="task-information-title">
     <div class="panel-heading buvp">
-        <h2 id="task-information-title" class="panel-title" style="margin:0;">
+        <h2 id="task-information-title" class="panel-title">
             <fa ng-if="::options.glyph.length" name="{{::options.glyph}}" class="m-r-sm"></fa>
             {{data.title}}
         </h2>
@@ -31,7 +31,7 @@
         </span>
     </div>
 
-    <div class="panel-body" style="padding-bottom: 0;">
+    <div class="panel-body" style="padding-bottom: 15px;">
         <div class="details">
 
             <!-- LINE 1: Alarm Code (left) + Alarm Password (right) -- add only -->
@@ -113,12 +113,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 20px;
-  border-bottom: 1px solid #ddd;
+  padding: 0 20px;
+  margin-bottom: 5px;
 }
 
 .request-type-block label {
-  display: block;
   margin: 0;
   color: #555;
   font-weight: 600;
