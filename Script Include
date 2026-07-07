@@ -150,6 +150,26 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return gr.hasNext();
     },
 
+	/**
+     * Decrypts alarm code/password for a work order record.
+     * Decrypt rights come from a script-type Module Access Policy
+     * scoped to this Script Include — caller must already have
+     * validated opened_for/attested before calling this.
+     */
+    getAlarmCredentials: function(sysId) {
+        var result = { code: '', password: '' };
+        if (!sysId)
+            return result;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!gr.get(sysId))
+            return result;
+
+        result.code     = gr.getDisplayValue('alarm_code');
+        result.password = gr.getDisplayValue('alarm_password');
+        return result;
+    },
+
 
     type: 'AlarmCodeHelper'
 });
