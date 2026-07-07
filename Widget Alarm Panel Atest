@@ -257,6 +257,8 @@
   var FIELD_ATTEST = 'attested';   // Boolean (new)
   /* ─────────────────────────────────────────────────────── */
 
+  var credHelper = new AlarmCodeHelper();
+
   data.state    = '';
   data.location = '';
   data.code     = '';
@@ -278,8 +280,10 @@
   // Already attested?
   if (isAttested(wo)) { data.state = 'already_attested'; return; }
 
-  // Must have something to reveal (getDisplayValue decrypts encrypted fields)
-  if (!wo.getDisplayValue(FIELD_CODE) || !wo.getDisplayValue(FIELD_PASS)) {
+  // Decrypt via Script Include — MAP grants decrypt rights to the script,
+  // not to the opened_for user's session
+  var precheck = credHelper.getAlarmCredentials(sysId);
+  if (!precheck.code || !precheck.password) {
     data.state = 'not_ready';
     return;
   }
@@ -306,8 +310,9 @@
     var check = new GlideRecord(TABLE);
     if (!check.get(sysId) || !isAttested(check)) { data.state = 'error'; return; }
 
-    data.code     = check.getDisplayValue(FIELD_CODE);
-    data.password = check.getDisplayValue(FIELD_PASS);
+    var creds     = credHelper.getAlarmCredentials(sysId);
+    data.code     = creds.code;
+    data.password = creds.password;
     data.location = getLocation(check);
     data.state    = 'revealed';
     return;
