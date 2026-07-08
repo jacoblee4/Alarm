@@ -336,7 +336,7 @@
 // Cleint script
 
 
-api.controller = function($location, $timeout) {
+api.controller = function($location) {
   var c = this;
 
   c.state       = 'loading';
@@ -347,7 +347,6 @@ api.controller = function($location, $timeout) {
   c.ack2        = false;
   c.revealing   = false;
   c.serverError = '';
-  c.copied      = '';
 
   c.$onInit = function() {
     var sysId = $location.search().sys_id || c.options.sys_id || '';
