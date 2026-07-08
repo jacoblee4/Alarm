@@ -81,27 +81,26 @@
       </div>
 
       <div class="aw-cred">
-        <p class="aw-cred-label">Alarm Code</p>
-        <div class="aw-cred-row">
-          <span class="aw-cred-value">{{c.code}}</span>
-          <button class="aw-copy-btn" ng-class="{'copied': c.copied === 'code'}" ng-click="c.copy(c.code, 'code')" type="button">
-            <i ng-class="c.copied === 'code' ? 'fa fa-check' : 'fa fa-copy'"></i>
-            {{c.copied === 'code' ? 'Copied' : 'Copy'}}
-          </button>
-        </div>
-      </div>
+  <p class="aw-cred-label">Alarm Code</p>
+  <div class="aw-cred-row">
+    <span class="aw-cred-value">{{c.showCode ? c.code : c.mask(c.code)}}</span>
+    <button class="aw-toggle-btn" ng-click="c.showCode = !c.showCode" type="button">
+      <i ng-class="c.showCode ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+      {{c.showCode ? 'Hide' : 'Show'}}
+    </button>
+  </div>
+</div>
 
-      <div class="aw-cred">
-        <p class="aw-cred-label">Alarm Password</p>
-        <div class="aw-cred-row">
-          <span class="aw-cred-value">{{c.password}}</span>
-          <button class="aw-copy-btn" ng-class="{'copied': c.copied === 'pass'}" ng-click="c.copy(c.password, 'pass')" type="button">
-            <i ng-class="c.copied === 'pass' ? 'fa fa-check' : 'fa fa-copy'"></i>
-            {{c.copied === 'pass' ? 'Copied' : 'Copy'}}
-          </button>
-        </div>
-      </div>
-
+<div class="aw-cred">
+  <p class="aw-cred-label">Alarm Password</p>
+  <div class="aw-cred-row">
+    <span class="aw-cred-value">{{c.showPass ? c.password : c.mask(c.password)}}</span>
+    <button class="aw-toggle-btn" ng-click="c.showPass = !c.showPass" type="button">
+      <i ng-class="c.showPass ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+      {{c.showPass ? 'Hide' : 'Show'}}
+    </button>
+  </div>
+</div>
       <div class="aw-final-note">
         <i class="fa fa-info-circle"></i>
         <p>Save these now. This is the only time they will be shown — refreshing or returning to this link will not display them again.</p>
@@ -201,14 +200,13 @@
   font-family: "SF Mono", "Consolas", monospace; font-size: 20px; font-weight: 700;
   color: #1a1f36; letter-spacing: .08em; word-break: break-all;
 }
-.aw-copy-btn {
+.aw-toggle-btn {
   background: #fff; border: 1.5px solid #d9dde8; border-radius: 6px;
   padding: 7px 12px; font-size: 13px; font-weight: 600; color: #1890ff;
   cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center;
   gap: 6px; transition: border-color .2s, color .2s;
 }
-.aw-copy-btn:hover { border-color: #1890ff; }
-.aw-copy-btn.copied { color: #52c41a; border-color: #52c41a; }
+.aw-toggle-btn:hover { border-color: #1890ff; }
 
 /* ----- Final Note ----- */
 .aw-final-note {
@@ -394,12 +392,10 @@ api.controller = function($location, $timeout) {
     });
   };
 
-  c.copy = function(text, which) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function() {
-        $timeout(function() { c.copied = which; });
-        $timeout(function() { c.copied = ''; }, 1500);
-      });
-    }
+  c.showCode = false;
+  c.showPass = false;
+
+  c.mask = function(text) {
+    return text ? new Array(text.length + 1).join('*') : '';
   };
 };
