@@ -1,0 +1,70 @@
+(function runProducer(current, producer) {
+
+    // Set issue type and description for the current record
+    current.issue_type = 'alarm_panel';
+	current.short_description = 'PSSR: Alarm Panel Request';
+    current.description = 'Alarm Panel Request';
+
+    // Handle 'add' request type
+    if (producer.request_type && producer.request_type.toString() === 'add') {
+
+        // Check if 'opened_for' is provided
+        if (producer.opened_for) {
+            var userAlarmGR = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+            userAlarmGR.addQuery('employee', producer.opened_for);
+            userAlarmGR.setLimit(1);
+            userAlarmGR.query();
+
+            if (userAlarmGR.next()) {
+				//Set the user tpe as existing and pull the current code/password used.
+                current.user_type = 'existing';
+
+                current.alarm_code = userAlarmGR.getValue('alarm_code');
+                current.alarm_password = userAlarmGR.getValue('alarm_password');
+
+            } else {
+				//Set the user type as new and generate a unique alarm code
+				current.user_type = 'new';
+
+                var helper = new AlarmCodeHelper();
+                var code = helper.generateUniqueCode();
+
+                if (code !== 'ERROR') {
+                    current.alarm_code = code;
+                }
+
+            }
+        }
+
+        return;
+    }
+
+
+    // Only proceed if request type is 'remove'
+    if (!producer.request_type || producer.request_type.toString() !== 'remove') {
+        return;
+    }
+
+    // Ensure alarm code location is provided
+    if (!producer.alarm_code_location) {
+        return;
+    }
+
+    // Retrieve alarm code record
+    var alarmCodeGR = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+    if (!alarmCodeGR.get(producer.alarm_code_location)) {
+        return;
+    }
+
+    // Set branch, region, and building fields based on 'issue_at_branch'
+    if (producer.issue_at_branch == 'Yes') {
+        current.branch = alarmCodeGR.branch;
+        current.region = '';
+        current.building = '';
+    } else {
+        current.branch = '';
+        current.region = alarmCodeGR.region;
+        current.building = alarmCodeGR.building;
+    }
+
+})(current, producer);
