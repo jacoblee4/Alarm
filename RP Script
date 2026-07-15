@@ -19,10 +19,12 @@
                 current.alarm_code = creds.code;
                 current.alarm_password = creds.password;
             } else {
-                // New user — generate a unique alarm code
+                // New user — reuse code from an open work order, else generate
                 current.user_type = 'new';
-                var code = helper.generateUniqueCode();
-                if (code !== 'ERROR') {
+                var code = helper.getCodeFromOpenWorkOrders(producer.opened_for);
+                if (!code)
+                    code = helper.generateUniqueCode();
+                if (code && code !== 'ERROR') {
                     current.alarm_code = code;
                 }
             }
