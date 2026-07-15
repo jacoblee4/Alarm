@@ -15,3 +15,23 @@ hasOpenPasswordRequest: function(openedFor) {
     gr.query();
     return gr.hasNext();
 },
+
+
+
+
+
+
+
+(function executeRule(current, previous /*null when async*/) {
+    var helper = new AlarmCodeHelper();
+    var openedFor = current.getValue('x_banun_bunow_al_0_opened_for');
+
+    var creds = helper.pullExistingCredentials(openedFor);
+    if (creds.found) {
+        current.setValue('alarm_code', creds.code);
+        current.setValue('alarm_password', creds.password);
+    } else if (helper.hasOpenPasswordRequest(openedFor)) {
+        // Password already requested on another open record — carry the flag
+        current.setValue('requested_password', true);
+    }
+})(current, previous);
