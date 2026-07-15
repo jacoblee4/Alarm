@@ -1,1 +1,94 @@
+/**
+     * Copies alarm code/password from a work order to all other
+     * open work orders for the same user.
+     * (Called by Async BR when alarm_password is populated)
+     */
+    propagateCredentials: function(workOrderSysId) {
+        var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!src.get(workOrderSysId))
+            return;
 
+        var code = src.getDisplayValue('alarm_code');
+        var password = src.getDisplayValue('alarm_password');
+        if (!password)
+            return;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', src.getValue('x_banun_bunow_al_0_opened_for'));
+        gr.addQuery('sys_id', '!=', workOrderSysId);
+        gr.addActiveQuery();
+        gr.query();
+
+        while (gr.next()) {
+            // Skip records already in sync (also prevents BR recursion)
+            if (gr.getDisplayValue('alarm_code') == code &&
+                gr.getDisplayValue('alarm_password') == password)
+                continue;
+
+            gr.setValue('alarm_code', code);
+            gr.setValue('alarm_password', password);
+            gr.update();
+        }
+    },
+
+    /**
+     * Finds credentials on any other open work order for the user —
+     * covers the gap where the password exists on a work order but
+     * hasn't synced to the alarm codes table yet.
+     * (Called by Before Insert BR on new work orders)
+     */
+    pullExistingCredentials: function(openedFor) {
+        var result = {
+            found: false,
+            code: '',
+            password: ''
+        };
+        if (!openedFor)
+            return result;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addNotNullQuery('alarm_password');
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+
+        if (gr.next()) {
+            result.found = true;
+            result.code = gr.getDisplayValue('alarm_code');
+            result.password = gr.getDisplayValue('alarm_password');
+        }
+        return result;
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+BR 1 — Propagate on password entry. Async, Update. Condition: alarm_password changes AND is not empty (add your usual issue_type=alarm_panel condition):
+javascript(function executeRule(current, previous /*null when async*/) {
+    new AlarmCodeHelper().propagateCredentials(current.getUniqueValue());
+})(current, previous);
+
+
+
+
+
+
+
+
+BR 2 — Pull on new record. Before, Insert. Condition: alarm_password is empty (so it never stomps what your existing table-lookup prepopulate already filled):
+javascript(function executeRule(current, previous /*null when async*/) {
+    var creds = new AlarmCodeHelper().pullExistingCredentials(current.getValue('x_banun_bunow_al_0_opened_for'));
+    if (creds.found) {
+        current.setValue('alarm_code', creds.code);
+        current.setValue('alarm_password', creds.password);
+    }
+})(current, previous);
