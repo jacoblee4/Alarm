@@ -210,6 +210,134 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return 'ok';
     },
 
+	/**
+     * Syncs a work order's alarm data to the alarm codes table.
+     * Add: upserts the record matched on employee + location.
+     * Remove: deletes all matching records.
+     * (Called by Async BR on the work order table)
+     */
+    syncAlarmCodeList: function(workOrderSysId) {
+        var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!wo.get(workOrderSysId))
+            return;
+
+        var TARGET = 'x_banun_bunow_al_0_alarm_codes';
+        var isBranch = wo.getValue('issue_at_branch') == 'Yes';
+
+        // Find existing record(s) for this user + location
+        var gr = new GlideRecord(TARGET);
+        gr.addQuery('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
+        if (isBranch)
+            gr.addQuery('branch', wo.getValue('branch'));
+        else
+            gr.addQuery('building', wo.getValue('building'));
+        gr.query();
+
+        // REMOVE: delete all matches
+        if (wo.getValue('request_type') == 'remove') {
+            if (gr.hasNext())
+                gr.deleteMultiple();
+            return;
+        }
+
+        // ADD: override existing or create new
+        var target = new GlideRecord(TARGET);
+        var exists = gr.next();
+        if (exists)
+            target = gr;
+        else
+            target.initialize();
+
+        target.setValue('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
+        target.setValue('issue_at_branch', wo.getValue('issue_at_branch'));
+        if (isBranch) {
+            target.setValue('branch', wo.getValue('branch'));
+            target.setValue('region', '');
+            target.setValue('building', '');
+        } else {
+            target.setValue('region', wo.getValue('region'));
+            target.setValue('building', wo.getValue('building'));
+            target.setValue('branch', '');
+        }
+
+        var fields = ['lobby', 'vault', 'atm', 'office', 'emergency_list', 'phone_number'];
+        for (var i = 0; i < fields.length; i++)
+            target.setValue(fields[i], wo.getValue(fields[i]));
+
+        // Encrypted fields — decrypt via existing MAP-scoped path
+        var creds = this.getAlarmCredentials(workOrderSysId);
+        target.setValue('alarm_code', creds.code);
+        target.setValue('alarm_password', creds.password);
+
+        if (exists)
+            target.update();
+        else
+            target.insert();
+    },
+
+	/**
+     * Copies alarm code/password from a work order to all other
+     * open work orders for the same user.
+     * (Called by Async BR when alarm_password is populated)
+     */
+    propagateCredentials: function(workOrderSysId) {
+        var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!src.get(workOrderSysId))
+            return;
+
+        var code = src.getDisplayValue('alarm_code');
+        var password = src.getDisplayValue('alarm_password');
+        if (!password)
+            return;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', src.getValue('x_banun_bunow_al_0_opened_for'));
+        gr.addQuery('sys_id', '!=', workOrderSysId);
+        gr.addActiveQuery();
+        gr.query();
+
+        while (gr.next()) {
+            // Skip records already in sync (also prevents BR recursion)
+            if (gr.getDisplayValue('alarm_code') == code &&
+                gr.getDisplayValue('alarm_password') == password)
+                continue;
+
+            gr.setValue('alarm_code', code);
+            gr.setValue('alarm_password', password);
+            gr.update();
+        }
+    },
+
+    /**
+     * Finds credentials on any other open work order for the user —
+     * covers the gap where the password exists on a work order but
+     * hasn't synced to the alarm codes table yet.
+     * (Called by Before Insert BR on new work orders)
+     */
+    pullExistingCredentials: function(openedFor) {
+        var result = {
+            found: false,
+            code: '',
+            password: ''
+        };
+        if (!openedFor)
+            return result;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addNotNullQuery('alarm_password');
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+
+        if (gr.next()) {
+            result.found = true;
+            result.code = gr.getDisplayValue('alarm_code');
+            result.password = gr.getDisplayValue('alarm_password');
+        }
+        return result;
+    },
+
 
     type: 'AlarmCodeHelper'
 });
