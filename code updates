@@ -1,0 +1,79 @@
+/**
+ * Returns the alarm code from any active work order for the user,
+ * or '' if none. (Called by RP Script so duplicate requests reuse
+ * the same code instead of generating a new one)
+ */
+getCodeFromOpenWorkOrders: function(openedFor) {
+    if (!openedFor)
+        return '';
+
+    var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+    gr.addNotNullQuery('alarm_code');
+    gr.addActiveQuery();
+    gr.setLimit(1);
+    gr.query();
+    return gr.next() ? gr.getDisplayValue('alarm_code') : '';
+},
+
+/**
+ * Collects decrypted alarm codes from all active work orders.
+ * Loop-compare is required because alarm_code is CLEE encrypted —
+ * you can't addQuery a plaintext value against it.
+ */
+_getActiveWorkOrderCodes: function() {
+    var codes = {};
+    var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    gr.addNotNullQuery('alarm_code');
+    gr.addActiveQuery();
+    gr.query();
+    while (gr.next())
+        codes[gr.getDisplayValue('alarm_code')] = true;
+    return codes;
+},
+
+
+
+
+
+
+
+
+
+generateUniqueCode: function() {
+    var maxAttempts = 50;
+    var woCodes = this._getActiveWorkOrderCodes();
+
+    for (var i = 0; i < maxAttempts; i++) {
+        var code = this._generateCode();
+
+        if (!woCodes[code] && !this._codeExists(code)) {
+            return code;
+        }
+    }
+    return "ERROR";
+},
+
+
+
+
+
+
+
+
+
+
+} else {
+    // New user — reuse code from an open work order, else generate
+    current.user_type = 'new';
+    var code = helper.getCodeFromOpenWorkOrders(producer.opened_for);
+    if (!code)
+        code = helper.generateUniqueCode();
+    if (code && code !== 'ERROR') {
+        current.alarm_code = code;
+    }
+}
+
+
+
+
