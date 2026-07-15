@@ -48,8 +48,9 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
     },
 
     /**
-     * Checks if an alarm code is already in use
-     * by another employee (excluding same opened_for)
+     * Checks if an alarm code is already in use by another employee
+     * (excluding same opened_for) — checks both the alarm codes
+     * table and active work orders.
      * (Used by onChange Client Script)
      */
     checkCodeInUse: function() {
@@ -61,6 +62,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
             return "AVAILABLE";
         }
 
+        // 1. Alarm codes table
         var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
         gr.addQuery('alarm_code', code);
 
@@ -72,7 +74,24 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         gr.setLimit(1);
         gr.query();
 
-        return gr.hasNext() ? "IN_USE" : "AVAILABLE";
+        if (gr.hasNext())
+            return "IN_USE";
+
+        // 2. Active work orders (encrypted field — compare decrypted values)
+        var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        wo.addNotNullQuery('alarm_code');
+        wo.addActiveQuery();
+        if (openedFor) {
+            wo.addQuery('x_banun_bunow_al_0_opened_for', '!=', openedFor);
+        }
+        wo.query();
+
+        while (wo.next()) {
+            if (wo.getDisplayValue('alarm_code') == code)
+                return "IN_USE";
+        }
+
+        return "AVAILABLE";
     },
 
     /* =====================
