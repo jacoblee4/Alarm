@@ -34,20 +34,16 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
      * (Used by the UI Action)
      */
     generateUniqueCode: function() {
-        // Maximum number of attempts to generate a unique code
         var maxAttempts = 50;
+        var woCodes = this._getActiveWorkOrderCodes();
 
-        // Try generating a unique code up to maxAttempts times
         for (var i = 0; i < maxAttempts; i++) {
             var code = this._generateCode();
 
-            // If the generated code does not exist, return it
-            if (!this._codeExists(code)) {
+            if (!woCodes[code] && !this._codeExists(code)) {
                 return code;
             }
         }
-
-        // Return "ERROR" if unable to generate a unique code
         return "ERROR";
     },
 
@@ -354,6 +350,40 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         gr.setLimit(1);
         gr.query();
         return gr.hasNext();
+    },
+
+    /**
+     * Returns the alarm code from any active work order for the user,
+     * or '' if none. (Called by RP Script so duplicate requests reuse
+     * the same code instead of generating a new one)
+     */
+    getCodeFromOpenWorkOrders: function(openedFor) {
+        if (!openedFor)
+            return '';
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addNotNullQuery('alarm_code');
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+        return gr.next() ? gr.getDisplayValue('alarm_code') : '';
+    },
+
+    /**
+     * Collects decrypted alarm codes from all active work orders.
+     * Loop-compare is required because alarm_code is CLEE encrypted —
+     * you can't addQuery a plaintext value against it.
+     */
+    _getActiveWorkOrderCodes: function() {
+        var codes = {};
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addNotNullQuery('alarm_code');
+        gr.addActiveQuery();
+        gr.query();
+        while (gr.next())
+            codes[gr.getDisplayValue('alarm_code')] = true;
+        return codes;
     },
 
 
