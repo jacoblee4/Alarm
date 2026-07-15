@@ -205,12 +205,12 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
     firePasswordEmailEvent: function() {
         var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
         if (gr.get(this.getParameter('sysparm_sys_id'))) {
-            gr.eventQueue('x_banun_property_0.request.password', gr, gr.getValue( 'x_banun_bunow_al_0_opened_for'));
+            gr.eventQueue('x_banun_property_0.request.password', gr, gr.getValue('x_banun_bunow_al_0_opened_for'));
         }
         return 'ok';
     },
 
-	/**
+    /**
      * Syncs a work order's alarm data to the alarm codes table.
      * Add: upserts the record matched on employee + location.
      * Remove: deletes all matching records.
@@ -275,7 +275,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
             target.insert();
     },
 
-	/**
+    /**
      * Copies alarm code/password from a work order to all other
      * open work orders for the same user.
      * (Called by Async BR when alarm_password is populated)
@@ -336,6 +336,24 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
             result.password = gr.getDisplayValue('alarm_password');
         }
         return result;
+    },
+
+    /**
+     * Returns true if any other open work order for the user
+     * already has requested_password = true.
+     * (Called by Before Insert BR on new work orders)
+     */
+    hasOpenPasswordRequest: function(openedFor) {
+        if (!openedFor)
+            return false;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addQuery('requested_password', true);
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+        return gr.hasNext();
     },
 
 
