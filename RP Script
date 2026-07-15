@@ -3,7 +3,7 @@
     // Set issue type and description for the current record
     current.issue_type = 'alarm_panel';
     current.short_description = 'PSSR: Alarm Panel Request';
-    current.description = 'Alarm Panel Request';
+    current.description = 'Alarm Panel Request for: ' + producer.opened_for.getDisplayValue();
 
     // Handle 'add' request type
     if (producer.request_type && producer.request_type.toString() === 'add') {
