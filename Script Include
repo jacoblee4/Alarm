@@ -296,32 +296,33 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
      * (Called by Async BR when alarm_password is populated)
      */
     propagateCredentials: function(workOrderSysId) {
-        var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
-        if (!src.get(workOrderSysId))
-            return;
+    var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    if (!src.get(workOrderSysId))
+        return;
 
-        var code = src.getDisplayValue('alarm_code');
-        var password = src.getDisplayValue('alarm_password');
-        if (!password)
-            return;
+    var creds = this.getAlarmCredentials(workOrderSysId);
+    var code = creds.code;
+    var password = creds.password;
+    if (!password)
+        return;
 
-        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
-        gr.addQuery('x_banun_bunow_al_0_opened_for', src.getValue('x_banun_bunow_al_0_opened_for'));
-        gr.addQuery('sys_id', '!=', workOrderSysId);
-        gr.addActiveQuery();
-        gr.query();
+    var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    gr.addQuery('x_banun_bunow_al_0_opened_for', src.getValue('x_banun_bunow_al_0_opened_for'));
+    gr.addQuery('sys_id', '!=', workOrderSysId);
+    gr.addActiveQuery();
+    gr.query();
 
-        while (gr.next()) {
-            // Skip records already in sync (also prevents BR recursion)
-            if (gr.getDisplayValue('alarm_code') == code &&
-                gr.getDisplayValue('alarm_password') == password)
-                continue;
+    while (gr.next()) {
+        // Skip records already in sync (also prevents BR recursion)
+        if (gr.getDisplayValue('alarm_code') == code &&
+            gr.getDisplayValue('alarm_password') == password)
+            continue;
 
-            gr.setValue('alarm_code', code);
-            gr.setValue('alarm_password', password);
-            gr.update();
-        }
-    },
+        gr.setValue('alarm_code', code);
+        gr.setValue('alarm_password', password);
+        gr.update();
+    }
+},
 
     /**
      * Finds credentials on any other open work order for the user —
