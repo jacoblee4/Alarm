@@ -295,35 +295,47 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
      * open work orders for the same user.
      * (Called by Async BR when alarm_password is populated)
      */
-    propagateCredentials: function(workOrderSysId) {
+  propagateCredentials: function(workOrderSysId) {
     var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
-    if (!src.get(workOrderSysId))
+    if (!src.get(workOrderSysId)) {
+        gs.info('propagateCredentials: could not load source record ' + workOrderSysId);
         return;
+    }
 
     var creds = this.getAlarmCredentials(workOrderSysId);
     var code = creds.code;
     var password = creds.password;
-    if (!password)
+    gs.info('propagateCredentials: decrypted code="' + code + '" password="' + password + '"');
+    if (!password) {
+        gs.info('propagateCredentials: no password decrypted, exiting early');
         return;
+    }
+
+    var openedFor = src.getValue('x_banun_bunow_al_0_opened_for');
+    gs.info('propagateCredentials: opened_for=' + openedFor);
 
     var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
-    gr.addQuery('x_banun_bunow_al_0_opened_for', src.getValue('x_banun_bunow_al_0_opened_for'));
+    gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
     gr.addQuery('sys_id', '!=', workOrderSysId);
     gr.addActiveQuery();
     gr.query();
+    gs.info('propagateCredentials: found ' + gr.getRowCount() + ' other active work order(s) for this user');
 
     while (gr.next()) {
-        // Skip records already in sync (also prevents BR recursion)
+        gs.info('propagateCredentials: checking ' + gr.getUniqueValue() + ' current code="' + gr.getDisplayValue('alarm_code') + '" current password="' + gr.getDisplayValue('alarm_password') + '"');
+
         if (gr.getDisplayValue('alarm_code') == code &&
-            gr.getDisplayValue('alarm_password') == password)
+            gr.getDisplayValue('alarm_password') == password) {
+            gs.info('propagateCredentials: already in sync, skipping ' + gr.getUniqueValue());
             continue;
+        }
 
         gr.setValue('alarm_code', code);
         gr.setValue('alarm_password', password);
         gr.update();
+        gs.info('propagateCredentials: updated ' + gr.getUniqueValue());
     }
 },
-
     /**
      * Finds credentials on any other open work order for the user —
      * covers the gap where the password exists on a work order but
