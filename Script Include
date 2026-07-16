@@ -1,108 +1,415 @@
-(function() {
-  data.state   = '';
-  data.success = false;
-  data.error   = '';
+var AlarmCodeHelper = Class.create();
+AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 
-  // ── Guard: input object safety check ──────────────
-  if (!input || typeof input !== 'object') {
-    data.state        = 'no_record';
-    data.errorMessage = 'No reference record found. Please contact an administrator.';
-    return;
-  }
+    // Retrieves the 'issue_at_branch' field for a given alarm code
+    getIssueAtBranch: function() {
+        var alarmCode = this.getParameter('sysparm_alarm_code');
+        if (!alarmCode)
+            return '';
 
-  var action = input.action;
-  var sysId  = input.sys_id;
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.get(alarmCode);
+        return gr.issue_at_branch;
 
-  // ── Guard: must have a sys_id ──────────────────────
-  if (!sysId) {
-    data.state        = 'no_record';
-    data.errorMessage = 'No reference record found. Please contact an administrator.';
-    return;
-  }
+    },
 
-  // ── Load the work order record ─────────────────────
-  var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
-  if (!wo.get(sysId)) {
-    data.state = 'denied';
-    return;
-  }
+    // Checks if an alarm code exists for a given employee
+    hasAlarmCode: function() {
+        var employeeName = this.getParameter('sysparm_employee');
 
-  // ── Check: request type must be 'add' ─────────────
-  var requestType = wo.getValue('request_type');
-  if (!requestType || requestType.toLowerCase() !== 'add') {
-    data.state = 'wrong_type';
-    return;
-  }
+        if (!employeeName)
+            return 'false';
 
-  // ── Check: already submitted? ──────────────────────
-  var alarmPassword = wo.getValue('alarm_password');
-  if (alarmPassword && alarmPassword.trim() !== '') {
-    data.state = 'submitted';
-    return;
-  }
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('employee', employeeName);
+        gr.setLimit(1);
+        gr.query();
 
-  // ── Check: logged-in user matches opened_for ───────
-  var openedForSysId = wo.getValue('x_banun_bunow_al_0_opened_for');
-  var currentUser    = gs.getUserID();
+        return gr.hasNext() ? 'true' : 'false';
+    },
 
-  if (openedForSysId !== currentUser) {
-    data.state = 'denied';
-    return;
-  }
 
-  // ── INIT action ────────────────────────────────────
-  if (action === 'init') {
-    data.state = 'form';
-    return;
-  }
+    /**
+     * Generates a unique 4-digit alarm code
+     * (Used by the UI Action)
+     */
+    generateUniqueCode: function() {
+        var maxAttempts = 50;
+        var woCodes = this._getActiveWorkOrderCodes();
 
-  // ── SUBMIT action ──────────────────────────────────
-  if (action === 'submit') {
-    var password = input.password || '';
+        for (var i = 0; i < maxAttempts; i++) {
+            var code = this._generateCode();
 
-    // Server-side validation (never trust client alone)
-    if (!password.match(/^[A-Za-z]{4,10}$/)) {
-      data.success = false;
-      data.error   = 'Invalid password. Must be 4–10 letters with no numbers or special characters.';
-      return;
-    }
+            if (!woCodes[code] && !this._codeExists(code)) {
+                return code;
+            }
+        }
+        return "ERROR";
+    },
 
-    // Re-fetch to confirm it hasn't been submitted since page load
-    var fresh = new GlideRecord('x_banun_property_0_physical_security_work_order');
-    if (!fresh.get(sysId)) {
-      data.success = false;
-      data.error   = 'Work order record could not be found.';
-      return;
-    }
+    /**
+     * Checks if an alarm code is already in use by another employee
+     * (excluding same opened_for) — checks both the alarm codes
+     * table and active work orders.
+     * (Used by onChange Client Script)
+     */
+    checkCodeInUse: function() {
+        var code = this.getParameter('sysparm_alarm_code');
+        var openedFor = this.getParameter('sysparm_opened_for');
 
-    var latestPw = fresh.getValue('alarm_password');
-    if (latestPw && latestPw.trim() !== '') {
-      data.success = false;
-      data.state   = 'submitted';
-      data.error   = 'A password has already been submitted for this record.';
-      return;
-    }
+        // Guard clause
+        if (!code || !/^\d{4}$/.test(code)) {
+            return "AVAILABLE";
+        }
 
-    // Write the password to the record
-    fresh.setValue('alarm_password', password);
-    fresh.update();
+        // 1. Alarm codes table
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('alarm_code', code);
 
-	// Fire event for password submission
-	gs.eventQueue(' x_banun_bunow_al_0.alarm.password.submit', fresh, '');
+        // Exclude same employee
+        if (openedFor) {
+            gr.addQuery('employee', '!=', openedFor);
+        }
 
-    // Verify the encrypted field was actually written by re-reading it
-    var verify = new GlideRecord('x_banun_property_0_physical_security_work_order');
-    if (!verify.get(sysId) || !verify.getValue('alarm_password')) {
-      data.success = false;
-      data.state   = 'error';
-      return;
-    }
+        gr.setLimit(1);
+        gr.query();
 
-    data.success = true;
-    return;
-  }
+        if (gr.hasNext())
+            return "IN_USE";
 
-  // Fallback
-  data.state = 'denied';
+        // 2. Active work orders (encrypted field — compare decrypted values)
+        var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        wo.addNotNullQuery('alarm_code');
+        wo.addActiveQuery();
+        if (openedFor) {
+            wo.addQuery('x_banun_bunow_al_0_opened_for', '!=', openedFor);
+        }
+        wo.query();
 
-})();
+        while (wo.next()) {
+            if (wo.getDisplayValue('alarm_code') == code)
+                return "IN_USE";
+        }
+
+        return "AVAILABLE";
+    },
+
+    /* =====================
+       Private helper methods
+       ===================== */
+
+    // Generate a 4 digit code with restrictions
+    _generateCode: function() {
+        var allowedFirstDigits = [1, 2, 3, 4, 5, 6, 8, 9]; // no 0 or 7
+        var maxAttempts = 50; // hard stop for safety
+        var attempt = 0;
+
+        while (attempt < maxAttempts) {
+            attempt++;
+
+            // First digit (no 0 or 7)
+            var firstDigit = allowedFirstDigits[
+                Math.floor(Math.random() * allowedFirstDigits.length)
+            ];
+
+            // Remaining digits
+            var remaining = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+            var code = String(firstDigit) + remaining;
+
+            // ---- Rule: block 911 ----
+            if (code.indexOf('911') !== -1) {
+                continue;
+            }
+
+            var digits = code.split('').map(function(d) {
+                return parseInt(d, 10);
+            });
+
+            // ---- Rule: block sequential ----
+            var d1 = digits[1] - digits[0];
+            var d2 = digits[2] - digits[1];
+            var d3 = digits[3] - digits[2];
+
+            if (
+                (d1 === 1 && d2 === 1 && d3 === 1) ||
+                (d1 === -1 && d2 === -1 && d3 === -1)
+            ) {
+                continue;
+            }
+
+            // ---- Rule: block ≤ 2 unique digits ----
+            var unique = {};
+            for (var i = 0; i < digits.length; i++) {
+                unique[digits[i]] = true;
+            }
+
+            if (Object.keys(unique).length <= 2) {
+                continue;
+            }
+
+            // Passed all rules
+            return code;
+        }
+
+        // Defensive fallback (should never realistically happen)
+        return null;
+    },
+
+
+    _codeExists: function(code) {
+        // Check if the code exists in the alarm codes table
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('alarm_code', code);
+        gr.setLimit(1);
+        gr.query();
+        return gr.hasNext();
+    },
+
+    /**
+     * Looks up an employee's existing alarm record and decrypts
+     * code/password. Decrypt rights come from the script-type
+     * Module Access Policy scoped to this Script Include.
+     * Returns found=false if the employee has no alarm record.
+     */
+    getCredentialsByEmployee: function(employee) {
+        var result = {
+            found: false,
+            code: '',
+            password: ''
+        };
+        if (!employee)
+            return result;
+
+        var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
+        gr.addQuery('employee', employee);
+        gr.setLimit(1);
+        gr.query();
+
+        if (!gr.next())
+            return result;
+
+        result.found = true;
+        result.code = gr.getDisplayValue('alarm_code');
+        result.password = gr.getDisplayValue('alarm_password');
+        return result;
+    },
+
+    /**
+     * Decrypts alarm code/password for a work order record.
+     * Decrypt rights come from a script-type Module Access Policy
+     * scoped to this Script Include — caller must already have
+     * validated opened_for/attested before calling this.
+     */
+    getAlarmCredentials: function(sysId) {
+        var result = {
+            code: '',
+            password: ''
+        };
+        if (!sysId)
+            return result;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!gr.get(sysId))
+            return result;
+
+        result.code = gr.getDisplayValue('alarm_code');
+        result.password = gr.getDisplayValue('alarm_password');
+        return result;
+    },
+
+    firePasswordEmailEvent: function() {
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (gr.get(this.getParameter('sysparm_sys_id'))) {
+            gr.eventQueue('x_banun_property_0.request.password', gr, gr.getValue('x_banun_bunow_al_0_opened_for'));
+        }
+        return 'ok';
+    },
+
+    /**
+     * Syncs a work order's alarm data to the alarm codes table.
+     * Add: upserts the record matched on employee + location.
+     * Remove: deletes all matching records.
+     * (Called by Async BR on the work order table)
+     */
+    syncAlarmCodeList: function(workOrderSysId) {
+        var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!wo.get(workOrderSysId))
+            return;
+
+        var TARGET = 'x_banun_bunow_al_0_alarm_codes';
+        var isBranch = wo.getValue('issue_at_branch') == 'Yes';
+
+        // Find existing record(s) for this user + location
+        var gr = new GlideRecord(TARGET);
+        gr.addQuery('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
+        if (isBranch)
+            gr.addQuery('branch', wo.getValue('branch'));
+        else
+            gr.addQuery('building', wo.getValue('building'));
+        gr.query();
+
+        // REMOVE: delete all matches
+        if (wo.getValue('request_type') == 'remove') {
+            if (gr.hasNext())
+                gr.deleteMultiple();
+            return;
+        }
+
+        // ADD: override existing or create new
+        var target = new GlideRecord(TARGET);
+        var exists = gr.next();
+        if (exists)
+            target = gr;
+        else
+            target.initialize();
+
+        target.setValue('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
+        target.setValue('issue_at_branch', wo.getValue('issue_at_branch'));
+        if (isBranch) {
+            target.setValue('branch', wo.getValue('branch'));
+            target.setValue('region', '');
+            target.setValue('building', '');
+        } else {
+            target.setValue('region', wo.getValue('region'));
+            target.setValue('building', wo.getValue('building'));
+            target.setValue('branch', '');
+        }
+
+        var fields = ['lobby', 'vault', 'atm', 'office', 'emergency_list', 'phone_number'];
+        for (var i = 0; i < fields.length; i++)
+            target.setValue(fields[i], wo.getValue(fields[i]));
+
+        // Encrypted fields — decrypt via existing MAP-scoped path
+        var creds = this.getAlarmCredentials(workOrderSysId);
+        target.setValue('alarm_code', creds.code);
+        target.setValue('alarm_password', creds.password);
+
+        if (exists)
+            target.update();
+        else
+            target.insert();
+    },
+
+    /**
+     * Copies alarm code/password from a work order to all other
+     * open work orders for the same user.
+     * (Called by Async BR when alarm_password is populated)
+     */
+    propagateCredentials: function(workOrderSysId) {
+        var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!src.get(workOrderSysId)) {
+            return;
+        }
+
+        var creds = this.getAlarmCredentials(workOrderSysId);
+        var code = creds.code;
+        var password = creds.password;
+        if (!password) {
+            return;
+        }
+
+        var openedFor = src.getValue('x_banun_bunow_al_0_opened_for');
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addQuery('sys_id', '!=', workOrderSysId);
+        gr.addActiveQuery();
+        gr.query();
+
+        while (gr.next()) {
+
+            if (gr.getDisplayValue('alarm_code') == code &&
+                gr.getDisplayValue('alarm_password') == password) {
+                continue;
+            }
+
+            gr.setValue('alarm_code', code);
+            gr.setValue('alarm_password', password);
+            gr.update();
+        }
+    },
+    /**
+     * Finds credentials on any other open work order for the user —
+     * covers the gap where the password exists on a work order but
+     * hasn't synced to the alarm codes table yet.
+     * (Called by Before Insert BR on new work orders)
+     */
+    pullExistingCredentials: function(openedFor) {
+        var result = {
+            found: false,
+            code: '',
+            password: ''
+        };
+        if (!openedFor)
+            return result;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addNotNullQuery('alarm_password');
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+
+        if (gr.next()) {
+            result.found = true;
+            result.code = gr.getDisplayValue('alarm_code');
+            result.password = gr.getDisplayValue('alarm_password');
+        }
+        return result;
+    },
+
+    /**
+     * Returns true if any other open work order for the user
+     * already has requested_password = true.
+     * (Called by Before Insert BR on new work orders)
+     */
+    hasOpenPasswordRequest: function(openedFor) {
+        if (!openedFor)
+            return false;
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addQuery('requested_password', true);
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+        return gr.hasNext();
+    },
+
+    /**
+     * Returns the alarm code from any active work order for the user,
+     * or '' if none. (Called by RP Script so duplicate requests reuse
+     * the same code instead of generating a new one)
+     */
+    getCodeFromOpenWorkOrders: function(openedFor) {
+        if (!openedFor)
+            return '';
+
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addQuery('x_banun_bunow_al_0_opened_for', openedFor);
+        gr.addNotNullQuery('alarm_code');
+        gr.addActiveQuery();
+        gr.setLimit(1);
+        gr.query();
+        return gr.next() ? gr.getDisplayValue('alarm_code') : '';
+    },
+
+    /**
+     * Collects decrypted alarm codes from all active work orders.
+     * Loop-compare is required because alarm_code is CLEE encrypted —
+     * you can't addQuery a plaintext value against it.
+     */
+    _getActiveWorkOrderCodes: function() {
+        var codes = {};
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        gr.addNotNullQuery('alarm_code');
+        gr.addActiveQuery();
+        gr.query();
+        while (gr.next())
+            codes[gr.getDisplayValue('alarm_code')] = true;
+        return codes;
+    },
+
+
+    type: 'AlarmCodeHelper'
+});
