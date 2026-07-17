@@ -28,11 +28,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return gr.hasNext() ? 'true' : 'false';
     },
 
-
-    /**
-     * Generates a unique 4-digit alarm code
-     * (Used by the UI Action)
-     */
+    // Generates a unique 4-digit alarm code
     generateUniqueCode: function() {
         var maxAttempts = 50;
         var woCodes = this._getActiveWorkOrderCodes();
@@ -47,12 +43,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return "ERROR";
     },
 
-    /**
-     * Checks if an alarm code is already in use by another employee
-     * (excluding same opened_for) — checks both the alarm codes
-     * table and active work orders.
-     * (Used by onChange Client Script)
-     */
+    //Checks if an alarm code is already in use by another employee
     checkCodeInUse: function() {
         var code = this.getParameter('sysparm_alarm_code');
         var openedFor = this.getParameter('sysparm_opened_for');
@@ -62,7 +53,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
             return "AVAILABLE";
         }
 
-        // 1. Alarm codes table
         var gr = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
         gr.addQuery('alarm_code', code);
 
@@ -77,7 +67,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         if (gr.hasNext())
             return "IN_USE";
 
-        // 2. Active work orders (encrypted field — compare decrypted values)
         var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
         wo.addNotNullQuery('alarm_code');
         wo.addActiveQuery();
@@ -93,10 +82,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
 
         return "AVAILABLE";
     },
-
-    /* =====================
-       Private helper methods
-       ===================== */
 
     // Generate a 4 digit code with restrictions
     _generateCode: function() {
@@ -151,7 +136,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
             return code;
         }
 
-        // Defensive fallback (should never realistically happen)
+        // Defensive fallback
         return null;
     },
 
@@ -165,12 +150,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return gr.hasNext();
     },
 
-    /**
-     * Looks up an employee's existing alarm record and decrypts
-     * code/password. Decrypt rights come from the script-type
-     * Module Access Policy scoped to this Script Include.
-     * Returns found=false if the employee has no alarm record.
-     */
+    //Looks up an employee's existing alarm record and decrypts code/password.
     getCredentialsByEmployee: function(employee) {
         var result = {
             found: false,
@@ -194,12 +174,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return result;
     },
 
-    /**
-     * Decrypts alarm code/password for a work order record.
-     * Decrypt rights come from a script-type Module Access Policy
-     * scoped to this Script Include — caller must already have
-     * validated opened_for/attested before calling this.
-     */
+    //Decrypts alarm code/password for a work order record.
     getAlarmCredentials: function(sysId) {
         var result = {
             code: '',
@@ -229,7 +204,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
      * Syncs a work order's alarm data to the alarm codes table.
      * Add: upserts the record matched on employee + location.
      * Remove: deletes all matching records.
-     * (Called by Async BR on the work order table)
      */
     syncAlarmCodeList: function(workOrderSysId) {
         var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
@@ -239,7 +213,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         var TARGET = 'x_banun_bunow_al_0_alarm_codes';
         var isBranch = wo.getValue('issue_at_branch') == 'Yes';
 
-        // Find existing record(s) for this user + location
+        // Find existing records for this user + location
         var gr = new GlideRecord(TARGET);
         gr.addQuery('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
         if (isBranch)
@@ -293,7 +267,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
     /**
      * Copies alarm code/password from a work order to all other
      * open work orders for the same user.
-     * (Called by Async BR when alarm_password is populated)
      */
     propagateCredentials: function(workOrderSysId) {
         var src = new GlideRecord('x_banun_property_0_physical_security_work_order');
@@ -332,7 +305,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
      * Finds credentials on any other open work order for the user —
      * covers the gap where the password exists on a work order but
      * hasn't synced to the alarm codes table yet.
-     * (Called by Before Insert BR on new work orders)
      */
     pullExistingCredentials: function(openedFor) {
         var result = {
@@ -361,7 +333,6 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
     /**
      * Returns true if any other open work order for the user
      * already has requested_password = true.
-     * (Called by Before Insert BR on new work orders)
      */
     hasOpenPasswordRequest: function(openedFor) {
         if (!openedFor)
@@ -376,11 +347,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return gr.hasNext();
     },
 
-    /**
-     * Returns the alarm code from any active work order for the user,
-     * or '' if none. (Called by RP Script so duplicate requests reuse
-     * the same code instead of generating a new one)
-     */
+    //Returns the alarm code from any active work order for the user, or '' if none.
     getCodeFromOpenWorkOrders: function(openedFor) {
         if (!openedFor)
             return '';
@@ -394,11 +361,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return gr.next() ? gr.getDisplayValue('alarm_code') : '';
     },
 
-    /**
-     * Collects decrypted alarm codes from all active work orders.
-     * Loop-compare is required because alarm_code is CLEE encrypted —
-     * you can't addQuery a plaintext value against it.
-     */
+    //Collects decrypted alarm codes from all active work orders.
     _getActiveWorkOrderCodes: function() {
         var codes = {};
         var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
@@ -410,57 +373,52 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return codes;
     },
 
-	/**
- * Validates and writes the alarm password for a work order,
- * then fires the notification event. Called by the widget so
- * the write + event happen through the Script Include rather
- * than inline as the logged-in portal user.
- */
-submitPassword: function(sysId, password) {
-    var result = {
-        success: false,
-        error: '',
-        state: ''
-    };
+    //Validates and writes the alarm password for a work order, then fires the notification event.
+    submitPassword: function(sysId, password) {
+        var result = {
+            success: false,
+            error: '',
+            state: ''
+        };
 
-    if (!sysId || !password) {
-        result.error = 'Missing sys_id or password.';
+        if (!sysId || !password) {
+            result.error = 'Missing sys_id or password.';
+            return result;
+        }
+
+        if (!password.match(/^[A-Za-z]{4,10}$/)) {
+            result.error = 'Invalid password. Must be 4–10 letters with no numbers or special characters.';
+            return result;
+        }
+
+        var fresh = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!fresh.get(sysId)) {
+            result.error = 'Work order record could not be found.';
+            return result;
+        }
+
+        var latestPw = fresh.getValue('alarm_password');
+        if (latestPw && latestPw.trim() !== '') {
+            result.state = 'submitted';
+            result.error = 'A password has already been submitted for this record.';
+            return result;
+        }
+
+        fresh.setValue('alarm_password', password);
+        fresh.update();
+
+        gs.eventQueue('x_banun_bunow_al_0.alarm.password.submit', fresh, '');
+
+        var verify = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!verify.get(sysId) || !verify.getValue('alarm_password')) {
+            result.state = 'error';
+            result.error = 'Password was not saved. Please try again.';
+            return result;
+        }
+
+        result.success = true;
         return result;
-    }
-
-    if (!password.match(/^[A-Za-z]{4,10}$/)) {
-        result.error = 'Invalid password. Must be 4–10 letters with no numbers or special characters.';
-        return result;
-    }
-
-    var fresh = new GlideRecord('x_banun_property_0_physical_security_work_order');
-    if (!fresh.get(sysId)) {
-        result.error = 'Work order record could not be found.';
-        return result;
-    }
-
-    var latestPw = fresh.getValue('alarm_password');
-    if (latestPw && latestPw.trim() !== '') {
-        result.state = 'submitted';
-        result.error = 'A password has already been submitted for this record.';
-        return result;
-    }
-
-    fresh.setValue('alarm_password', password);
-    fresh.update();
-
-    gs.eventQueue('x_banun_bunow_al_0.alarm.password.submit', fresh, '');
-
-    var verify = new GlideRecord('x_banun_property_0_physical_security_work_order');
-    if (!verify.get(sysId) || !verify.getValue('alarm_password')) {
-        result.state = 'error';
-        result.error = 'Password was not saved. Please try again.';
-        return result;
-    }
-
-    result.success = true;
-    return result;
-},
+    },
 
 
     type: 'AlarmCodeHelper'
