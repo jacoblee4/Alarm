@@ -410,7 +410,7 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return codes;
     },
 
-/**
+	/**
  * Validates and writes the alarm password for a work order,
  * then fires the notification event. Called by the widget so
  * the write + event happen through the Script Include rather
