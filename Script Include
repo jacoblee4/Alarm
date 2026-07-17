@@ -410,6 +410,58 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return codes;
     },
 
+/**
+ * Validates and writes the alarm password for a work order,
+ * then fires the notification event. Called by the widget so
+ * the write + event happen through the Script Include rather
+ * than inline as the logged-in portal user.
+ */
+submitPassword: function(sysId, password) {
+    var result = {
+        success: false,
+        error: '',
+        state: ''
+    };
+
+    if (!sysId || !password) {
+        result.error = 'Missing sys_id or password.';
+        return result;
+    }
+
+    if (!password.match(/^[A-Za-z]{4,10}$/)) {
+        result.error = 'Invalid password. Must be 4–10 letters with no numbers or special characters.';
+        return result;
+    }
+
+    var fresh = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    if (!fresh.get(sysId)) {
+        result.error = 'Work order record could not be found.';
+        return result;
+    }
+
+    var latestPw = fresh.getValue('alarm_password');
+    if (latestPw && latestPw.trim() !== '') {
+        result.state = 'submitted';
+        result.error = 'A password has already been submitted for this record.';
+        return result;
+    }
+
+    fresh.setValue('alarm_password', password);
+    fresh.update();
+
+    gs.eventQueue('x_banun_bunow_al_0.alarm.password.submit', fresh, '');
+
+    var verify = new GlideRecord('x_banun_property_0_physical_security_work_order');
+    if (!verify.get(sysId) || !verify.getValue('alarm_password')) {
+        result.state = 'error';
+        result.error = 'Password was not saved. Please try again.';
+        return result;
+    }
+
+    result.success = true;
+    return result;
+},
+
 
     type: 'AlarmCodeHelper'
 });
