@@ -1,9 +1,3 @@
-(function executeRule(current, previous /*null when async*/ ) {
-    var helper = new x_banun_bunow_al_0.AlarmCodeHelper();
-    helper.syncAlarmCodeList(current.getUniqueValue());
-
-    // Propagate credentials to other open work orders for this user
-    if (current.alarm_password.nil() == false && (!previous || previous.alarm_password.nil() == true)) {
-        helper.propagateCredentials(current.getUniqueValue());
-    }
+(function executeRule(current, previous /*null when async*/) {
+    new AlarmCodeHelper().propagateCredentials(current.getUniqueValue());
 })(current, previous);
