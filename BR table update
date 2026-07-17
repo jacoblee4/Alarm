@@ -1,69 +1,8 @@
-(function executeRule(current, previous /*null when async*/) {
-    new AlarmCodeHelper().syncAlarmCodeList(current.getUniqueValue());
+condition: current.alarm_password.changes() && !current.alarm_password.nil()
+
+script:
+(function executeRule(current, previous /*null when async*/ ) {
+	// trigger the script include to update other passwords for same user
+    new x_banun_bunow_al_0.AlarmCodeHelper().propagateCredentials(current.getUniqueValue());
+
 })(current, previous);
-
-
-/**
-     * Syncs a work order's alarm data to the alarm codes table.
-     * Add: upserts the record matched on employee + location.
-     * Remove: deletes all matching records.
-     * (Called by Async BR on the work order table)
-     */
-    syncAlarmCodeList: function(workOrderSysId) {
-        var wo = new GlideRecord('x_banun_property_0_physical_security_work_order');
-        if (!wo.get(workOrderSysId))
-            return;
-
-        var TARGET = 'x_banun_bunow_al_0_alarm_codes';
-        var isBranch = wo.getValue('issue_at_branch') == 'Yes';
-
-        // Find existing record(s) for this user + location
-        var gr = new GlideRecord(TARGET);
-        gr.addQuery('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
-        if (isBranch)
-            gr.addQuery('branch', wo.getValue('branch'));
-        else
-            gr.addQuery('building', wo.getValue('building'));
-        gr.query();
-
-        // REMOVE: delete all matches
-        if (wo.getValue('request_type') == 'remove') {
-            if (gr.hasNext())
-                gr.deleteMultiple();
-            return;
-        }
-
-        // ADD: override existing or create new
-        var target = new GlideRecord(TARGET);
-        var exists = gr.next();
-        if (exists)
-            target = gr;
-        else
-            target.initialize();
-
-        target.setValue('employee', wo.getValue('x_banun_bunow_al_0_opened_for'));
-        target.setValue('issue_at_branch', wo.getValue('issue_at_branch'));
-        if (isBranch) {
-            target.setValue('branch', wo.getValue('branch'));
-            target.setValue('region', '');
-            target.setValue('building', '');
-        } else {
-            target.setValue('region', wo.getValue('region'));
-            target.setValue('building', wo.getValue('building'));
-            target.setValue('branch', '');
-        }
-
-        var fields = ['lobby', 'vault', 'atm', 'office', 'emergency_list', 'phone_number'];
-        for (var i = 0; i < fields.length; i++)
-            target.setValue(fields[i], wo.getValue(fields[i]));
-
-        // Encrypted fields — decrypt via existing MAP-scoped path
-        var creds = this.getAlarmCredentials(workOrderSysId);
-        target.setValue('alarm_code', creds.code);
-        target.setValue('alarm_password', creds.password);
-
-        if (exists)
-            target.update();
-        else
-            target.insert();
-    },
