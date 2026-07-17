@@ -81,29 +81,29 @@
       </div>
 
       <div class="aw-cred">
-  <p class="aw-cred-label">Alarm Code</p>
-  <div class="aw-cred-row">
-    <span class="aw-cred-value">{{c.showCode ? c.code : c.mask(c.code)}}</span>
-    <button class="aw-toggle-btn" ng-click="c.showCode = !c.showCode" type="button">
-      <i ng-class="c.showCode ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-      {{c.showCode ? 'Hide' : 'Show'}}
-    </button>
-  </div>
-</div>
+        <p class="aw-cred-label">Alarm Code</p>
+        <div class="aw-cred-row">
+          <span class="aw-cred-value">{{c.showCode ? c.code : c.mask(c.code)}}</span>
+          <button class="aw-toggle-btn" ng-click="c.showCode = !c.showCode" type="button">
+            <i ng-class="c.showCode ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+            {{c.showCode ? 'Hide' : 'Show'}}
+          </button>
+        </div>
+      </div>
 
-<div class="aw-cred">
-  <p class="aw-cred-label">Alarm Password</p>
-  <div class="aw-cred-row">
-    <span class="aw-cred-value">{{c.showPass ? c.password : c.mask(c.password)}}</span>
-    <button class="aw-toggle-btn" ng-click="c.showPass = !c.showPass" type="button">
-      <i ng-class="c.showPass ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
-      {{c.showPass ? 'Hide' : 'Show'}}
-    </button>
-  </div>
-</div>
+      <div class="aw-cred">
+        <p class="aw-cred-label">Alarm Password</p>
+        <div class="aw-cred-row">
+          <span class="aw-cred-value">{{c.showPass ? c.password : c.mask(c.password)}}</span>
+          <button class="aw-toggle-btn" ng-click="c.showPass = !c.showPass" type="button">
+            <i ng-class="c.showPass ? 'fa fa-eye-slash' : 'fa fa-eye'"></i>
+            {{c.showPass ? 'Hide' : 'Show'}}
+          </button>
+        </div>
+      </div>
       <div class="aw-final-note">
         <i class="fa fa-info-circle"></i>
-        <p>Save these now. This is the only time they will be shown — refreshing or returning to this link will not display them again.</p>
+        <p>Save these now. This is the only time they will be shown. Refreshing or returning to this link will not display them again.</p>
       </div>
     </div>
 
@@ -148,7 +148,6 @@
 .aw-state h2 { font-size: 22px; font-weight: 700; color: #1a1f36; margin: 16px 0 8px; }
 .aw-state p { font-size: 15px; color: #525f7f; line-height: 1.6; margin: 0; }
 
-/* ----- Icon Circles ----- */
 .aw-icon-wrap {
   width: 68px; height: 68px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -159,12 +158,10 @@
 .warn-icon      { background: #fff7e6; color: #fa8c16; }
 .success-icon   { background: #f6ffed; color: #52c41a; }
 
-/* ----- Form Layout ----- */
 .aw-form { text-align: left; }
 .aw-header { text-align: center; margin-bottom: 24px; }
 .aw-subtitle { font-size: 14px; color: #8c96b0; }
 
-/* ----- Warning Callout ----- */
 .aw-warn {
   display: flex; gap: 12px; text-align: left;
   background: #fff7e6; border: 1px solid #ffd591;
@@ -173,7 +170,6 @@
 .aw-warn i { color: #fa8c16; font-size: 20px; margin-top: 2px; flex-shrink: 0; }
 .aw-warn p { font-size: 14px; color: #7c5a14; margin: 0; line-height: 1.5; }
 
-/* ----- Acknowledgments ----- */
 .aw-acks { text-align: left; margin-bottom: 22px; }
 .aw-ack {
   display: flex; align-items: flex-start; gap: 12px;
@@ -186,7 +182,6 @@
 .aw-ack input { margin: 2px 0 0; width: 17px; height: 17px; flex-shrink: 0; cursor: pointer; accent-color: #1890ff; }
 .aw-ack span { font-size: 14px; color: #3d4559; line-height: 1.5; }
 
-/* ----- Credential Display ----- */
 .aw-cred {
   text-align: left; background: #f5f7fa; border: 1.5px solid #d9dde8;
   border-radius: 8px; padding: 14px 16px; margin-bottom: 14px;
@@ -208,7 +203,6 @@
 }
 .aw-toggle-btn:hover { border-color: #1890ff; }
 
-/* ----- Final Note ----- */
 .aw-final-note {
   display: flex; gap: 10px; text-align: left;
   background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px;
@@ -217,14 +211,12 @@
 .aw-final-note i { color: #f5222d; margin-top: 2px; flex-shrink: 0; }
 .aw-final-note p { font-size: 13px; color: #c0392b; margin: 0; line-height: 1.5; }
 
-/* ----- Error Banner ----- */
 .aw-error-banner {
   display: flex; align-items: center; gap: 8px;
   background: #fff1f0; border: 1px solid #ffa39e; border-radius: 8px;
   padding: 10px 14px; color: #c0392b; font-size: 14px; margin-bottom: 16px;
 }
 
-/* ----- Submit/Reveal Button ----- */
 .aw-submit-btn {
   width: 100%; padding: 13px; background: #1890ff; color: #fff; border: none;
   border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;
@@ -240,96 +232,121 @@
 
 
 
-
 // Server Script
 
 
 (function() {
-  /* ───────── CONFIG — adjust to match your table ───────── */
-  var TABLE        = 'x_banun_property_0_physical_security_work_order';
-  var FIELD_CODE   = 'alarm_code';
-  var FIELD_PASS   = 'alarm_password';
-  var FIELD_BRANCH = 'branch';
-  var FIELD_BLDG   = 'building';
-  var FIELD_OPENED = 'x_banun_bunow_al_0_opened_for';
-  var FIELD_ATTEST = 'attested';   // Boolean (new)
-  /* ─────────────────────────────────────────────────────── */
 
-  var credHelper = new AlarmCodeHelper();
+    var TABLE = 'x_banun_property_0_physical_security_work_order';
+    var FIELD_CODE = 'alarm_code';
+    var FIELD_PASS = 'alarm_password';
+    var FIELD_BRANCH = 'branch';
+    var FIELD_BLDG = 'building';
+    var FIELD_OPENED = 'x_banun_bunow_al_0_opened_for';
+    var FIELD_ATTEST = 'attested';
 
-  data.state    = '';
-  data.location = '';
-  data.code     = '';
-  data.password = '';
-  data.error    = '';
+    var credHelper = new AlarmCodeHelper();
 
-  if (!input || typeof input !== 'object') { data.state = 'no_record'; return; }
+    data.state = '';
+    data.location = '';
+    data.code = '';
+    data.password = '';
+    data.error = '';
 
-  var action = input.action;
-  var sysId  = input.sys_id;
-  if (!sysId) { data.state = 'no_record'; return; }
+    if (!input || typeof input !== 'object') {
+        data.state = 'no_record';
+        return;
+    }
 
-  var wo = new GlideRecord(TABLE);
-  if (!wo.get(sysId)) { data.state = 'no_record'; return; }
+    var action = input.action;
+    var sysId = input.sys_id;
+    if (!sysId) {
+        data.state = 'no_record';
+        return;
+    }
 
-  // Only the Opened For user
-  if (wo.getValue(FIELD_OPENED) !== gs.getUserID()) { data.state = 'denied'; return; }
+    var wo = new GlideRecord(TABLE);
+    if (!wo.get(sysId)) {
+        data.state = 'no_record';
+        return;
+    }
 
-  // Already attested?
-  if (isAttested(wo)) { data.state = 'already_attested'; return; }
+    // Only the Opened For user
+    if (wo.getValue(FIELD_OPENED) !== gs.getUserID()) {
+        data.state = 'denied';
+        return;
+    }
 
-  // Decrypt via Script Include — MAP grants decrypt rights to the script,
-  // not to the opened_for user's session
-  var precheck = credHelper.getAlarmCredentials(sysId);
-  if (!precheck.code || !precheck.password) {
-    data.state = 'not_ready';
-    return;
-  }
+    // Already attested?
+    if (isAttested(wo)) {
+        data.state = 'already_attested';
+        return;
+    }
 
-  data.location = getLocation(wo);
+    // Decrypt via Script Include — MAP grants decrypt rights to the script,
+    // not to the opened_for user's session
+    var precheck = credHelper.getAlarmCredentials(sysId);
+    if (!precheck.code || !precheck.password) {
+        data.state = 'not_ready';
+        return;
+    }
 
-  // INIT — show intro only, never the secret
-  if (action === 'init') {
-    data.state = 'intro';
-    return;
-  }
+    data.location = getLocation(wo);
 
-  // REVEAL — flip attest flag first, then return secret once
-  if (action === 'reveal') {
-    var fresh = new GlideRecord(TABLE);
-    if (!fresh.get(sysId)) { data.state = 'error'; return; }
-    if (fresh.getValue(FIELD_OPENED) !== gs.getUserID()) { data.state = 'denied'; return; }
-    if (isAttested(fresh)) { data.state = 'already_attested'; return; }
+    // INIT — show intro only, never the secret
+    if (action === 'init') {
+        data.state = 'intro';
+        return;
+    }
 
-    fresh.setValue(FIELD_ATTEST, true);
-    fresh.update();
+    // REVEAL — flip attest flag first, then return secret once
+    if (action === 'reveal') {
+        var fresh = new GlideRecord(TABLE);
+        if (!fresh.get(sysId)) {
+            data.state = 'error';
+            return;
+        }
+        if (fresh.getValue(FIELD_OPENED) !== gs.getUserID()) {
+            data.state = 'denied';
+            return;
+        }
+        if (isAttested(fresh)) {
+            data.state = 'already_attested';
+            return;
+        }
 
-    // Verify the flag actually stuck before revealing
-    var check = new GlideRecord(TABLE);
-    if (!check.get(sysId) || !isAttested(check)) { data.state = 'error'; return; }
+        fresh.setValue(FIELD_ATTEST, true);
+        fresh.update();
 
-    var creds     = credHelper.getAlarmCredentials(sysId);
-    data.code     = creds.code;
-    data.password = creds.password;
-    data.location = getLocation(check);
-    data.state    = 'revealed';
-    return;
-  }
+        // Verify the flag actually stuck before revealing
+        var check = new GlideRecord(TABLE);
+        if (!check.get(sysId) || !isAttested(check)) {
+            data.state = 'error';
+            return;
+        }
 
-  data.state = 'denied';
+        var creds = credHelper.getAlarmCredentials(sysId);
+        data.code = creds.code;
+        data.password = creds.password;
+        data.location = getLocation(check);
+        data.state = 'revealed';
+        return;
+    }
 
-  function isAttested(gr) {
-    var v = String(gr.getValue(FIELD_ATTEST) || '').toLowerCase();
-    return v === '1' || v === 'true';
-  }
+    data.state = 'denied';
 
-  function getLocation(gr) {
-    var b = gr.getDisplayValue(FIELD_BLDG);
-    if (b) return b;
-    var br = gr.getDisplayValue(FIELD_BRANCH);
-    if (br) return br;
-    return '';
-  }
+    function isAttested(gr) {
+        var v = String(gr.getValue(FIELD_ATTEST) || '').toLowerCase();
+        return v === '1' || v === 'true';
+    }
+
+    function getLocation(gr) {
+        var b = gr.getDisplayValue(FIELD_BLDG);
+        if (b) return b;
+        var br = gr.getDisplayValue(FIELD_BRANCH);
+        if (br) return br;
+        return '';
+    }
 })();
 
 
