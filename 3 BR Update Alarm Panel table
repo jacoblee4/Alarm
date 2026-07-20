@@ -1,0 +1,13 @@
+when: async update
+
+filter coniditon
+issue type is alarm panel request AND
+state changes from new OR assigned to internal OR submitted to vendor OR finialized with vendor
+AND state changes to Review OR closed completed. The idea here was that this should trigger if the state changes from a non/reviewclosed stated toa a review/closed state it should trigger this BR
+
+Script:
+
+(function executeRule(current, previous /*null when async*/ ) {
+	//Call script include to update the alarm codes table
+    new x_banun_bunow_al_0.AlarmCodeHelper().syncAlarmCodeList(current.getUniqueValue());
+})(current, previous);
