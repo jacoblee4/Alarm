@@ -420,6 +420,47 @@ AlarmCodeHelper.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
         return result;
     },
 
+    // Writes alarm code/password for a work order inside the MAP-authorized scope
+    applyCredentials: function(workOrderSysId) {
+        var gr = new GlideRecord('x_banun_property_0_physical_security_work_order');
+        if (!gr.get(workOrderSysId))
+            return;
+        if (gr.getValue('request_type') != 'add')
+            return;
+
+        var openedFor = gr.getValue('x_banun_bunow_al_0_opened_for');
+        if (!openedFor)
+            return;
+
+        var code = '';
+        var password = '';
+
+        var creds = this.getCredentialsByEmployee(openedFor);
+        if (!creds.found)
+            creds = this.pullExistingCredentials(openedFor);
+
+        if (creds.found) {
+            code = creds.code;
+            password = creds.password;
+        } else {
+            code = this.getCodeFromOpenWorkOrders(openedFor);
+            if (!code)
+                code = this.generateUniqueCode();
+            if (code == 'ERROR')
+                code = '';
+        }
+
+        if (!code && !password)
+            return;
+
+        if (code)
+            gr.setValue('alarm_code', code);
+        if (password)
+            gr.setValue('alarm_password', password);
+        gr.setWorkflow(false);
+        gr.update();
+    },
+
 
     type: 'AlarmCodeHelper'
 });
