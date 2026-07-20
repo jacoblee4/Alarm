@@ -1,0 +1,9 @@
+When to run: async update
+
+filter condition: issue type is alarm panel request, and request type is add
+scripted condition: current.alarm_password.changes() && !current.alarm_password.nil()
+
+screipt:
+(function executeRule(current, previous /*null when async*/) {
+    new x_banun_bunow_al_0.AlarmCodeHelper().propagateCredentials(current.getUniqueValue());
+})(current, previous);

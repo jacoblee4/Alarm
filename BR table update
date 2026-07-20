@@ -1,3 +1,0 @@
-(function executeRule(current, previous /*null when async*/) {
-    new AlarmCodeHelper().propagateCredentials(current.getUniqueValue());
-})(current, previous);
