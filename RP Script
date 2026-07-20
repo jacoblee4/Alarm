@@ -8,26 +8,11 @@
     // Handle 'add' request type
     if (producer.request_type && producer.request_type.toString() === 'add') {
 
-        // Check if 'opened_for' is provided
+        // Set user type only — encrypted fields are written by the
+        // after-insert BR via AlarmCodeHelper.applyCredentials()
         if (producer.opened_for) {
             var helper = new AlarmCodeHelper();
-            var creds = helper.getCredentialsByEmployee(producer.opened_for);
-
-            if (creds.found) {
-                // Existing user — pull decrypted code/password via Script Include
-                current.user_type = 'existing';
-                current.alarm_code = creds.code;
-                current.alarm_password = creds.password;
-            } else {
-                // New user — reuse code from an open work order, else generate
-                current.user_type = 'new';
-                var code = helper.getCodeFromOpenWorkOrders(producer.opened_for);
-                if (!code)
-                    code = helper.generateUniqueCode();
-                if (code && code !== 'ERROR') {
-                    current.alarm_code = code;
-                }
-            }
+            current.user_type = helper.getCredentialsByEmployee(producer.opened_for).found ? 'existing' : 'new';
         }
 
         return;
