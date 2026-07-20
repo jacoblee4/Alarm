@@ -1,64 +1,35 @@
 (function runProducer(current, producer) {
 
-    // Set issue type and description for the current record
+    var helper = new AlarmCodeHelper();
+
     current.issue_type = 'alarm_panel';
     current.short_description = 'PSSR: Alarm Panel Request';
     current.description = 'Alarm Panel Request for: ' + producer.opened_for.getDisplayValue();
 
-    // Handle 'add' request type
-    if (producer.request_type && producer.request_type.toString() === 'add') {
+    var requestType = producer.request_type ? producer.request_type.toString() : '';
 
-        // Check if 'opened_for' is provided
-        if (producer.opened_for) {
-            var helper = new AlarmCodeHelper();
-            var creds = helper.getCredentialsByEmployee(producer.opened_for);
-
-            if (creds.found) {
-                // Existing user — pull decrypted code/password via Script Include
-                current.user_type = 'existing';
-                current.alarm_code = creds.code;
-                current.alarm_password = creds.password;
-            } else {
-                // New user — reuse code from an open work order, else generate
-                current.user_type = 'new';
-                var code = helper.getCodeFromOpenWorkOrders(producer.opened_for);
-                if (!code)
-                    code = helper.generateUniqueCode();
-                if (code && code !== 'ERROR') {
-                    current.alarm_code = code;
-                }
-            }
-        }
-
+    // ADD — encrypted credentials are written after insert by the Business Rule
+    // (AlarmCodeHelper.applyInitialCredentials). Nothing encrypted is touched here.
+    if (requestType === 'add') {
+        current.user_type = helper.getInitialUserType(producer.opened_for.toString());
         return;
     }
 
-
-    // Only proceed if request type is 'remove'
-    if (!producer.request_type || producer.request_type.toString() !== 'remove') {
+    // REMOVE — location fields only (not encrypted, safe to set here)
+    if (requestType !== 'remove' || !producer.alarm_code_location) {
         return;
     }
 
-    // Ensure alarm code location is provided
-    if (!producer.alarm_code_location) {
+    var loc = helper.getRemoveLocationValues(
+        producer.alarm_code_location.toString(),
+        producer.issue_at_branch.toString()
+    );
+    if (!loc.found) {
         return;
     }
 
-    // Retrieve alarm code record
-    var alarmCodeGR = new GlideRecord('x_banun_bunow_al_0_alarm_codes');
-    if (!alarmCodeGR.get(producer.alarm_code_location)) {
-        return;
-    }
-
-    // Set branch, region, and building fields based on 'issue_at_branch'
-    if (producer.issue_at_branch == 'Yes') {
-        current.branch = alarmCodeGR.branch;
-        current.region = '';
-        current.building = '';
-    } else {
-        current.branch = '';
-        current.region = alarmCodeGR.region;
-        current.building = alarmCodeGR.building;
-    }
+    current.branch = loc.branch;
+    current.region = loc.region;
+    current.building = loc.building;
 
 })(current, producer);
